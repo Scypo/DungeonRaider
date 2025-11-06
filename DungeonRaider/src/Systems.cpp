@@ -1,0 +1,87 @@
+#include<algorithm>
+
+#include "Systems.h"
+#include"Components.h"
+#include"GameObjects.h"
+#include"Weapon.h"
+#include"Pathfinder.h"
+
+void MovementSystem::Run(float dt, sl::Scene& scene)
+{	
+	scene.ForEach<TransformComponent, MovementComponent>([&](sl::EntityId id, TransformComponent& transform, MovementComponent& movement)
+		{
+            movement.proposedPos = transform.pos + movement.dir * movement.speed * dt;
+		});
+}
+
+void InputReadSystem::Run(float dt, sl::Scene& scene)
+{
+	auto& kbd = se::Engine::GetKeyboard();
+	auto& mouse = se::Engine::GetMouse();
+
+	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameContext::player);
+	movement.dir = { 0.0f,0.0f };
+	if (kbd.KeyIsPressed('W')) movement.dir.y -= 1.0f;
+	if (kbd.KeyIsPressed('S')) movement.dir.y += 1.0f;
+	if (kbd.KeyIsPressed('A')) movement.dir.x -= 1.0f;
+	if (kbd.KeyIsPressed('D')) movement.dir.x += 1.0f;
+
+	WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(GameContext::player);
+	if(mouse.LeftIsPressed())
+	{
+		Camera& cam = scene.GetComponent<Camera>(GameContext::camera);
+		sl::Vec2f mouseScreen = mouse.GetPos();
+		sl::Vec2f mouseCanvas = sl::Vec2f{
+			mouseScreen.x * (se::Engine::GetGraphics().GetCanvasWidth() / se::Engine::GetWindow().GetWidth()),
+			mouseScreen.y * (se::Engine::GetGraphics().GetCanvasHeight() / se::Engine::GetWindow().GetHeight())
+		};
+		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
+
+		WeaponAttack(GameContext::player, mouseWorldPos);
+	}
+	weapon.remainingTime -= dt;
+	
+}
+
+void CameraSystem::Run(float dt, sl::Scene& scene)
+{
+	scene.ForEach<Camera>([&](sl::EntityId id, Camera& cam)
+		{
+			if(cam.active)
+			{
+				cam.pos = scene.GetComponent<TransformComponent>(GameContext::player).pos;
+
+				cam.pos.x -= se::Engine::GetGraphics().GetCanvasWidth() * 0.5f;
+				cam.pos.y -= se::Engine::GetGraphics().GetCanvasHeight() * 0.5f;
+
+				float scroll = se::Engine::GetMouse().GetScrollOffsetY();
+				if (scroll > 0) cam.zoom += 0.05f;
+				if (scroll < 0) cam.zoom = std::max(0.05f, cam.zoom - 0.05f);
+			}
+		});
+}
+
+void ExecuteEventSystem::Run(float dt, sl::Scene& scene)
+{
+	scene.GetEventBus().DispatchAll();
+}
+
+void RenderSystem::Run(float dt, sl::Scene& scene)
+{
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	Camera& cam = scene.GetComponent<Camera>(GameContext::camera);
+	gfx.BeginView(cam.pos, cam.zoom);
+	gfx.SetDrawLayer(0.0f);
+	DrawLevel();
+	gfx.SetDrawLayer(2.0f);
+	DrawGameObjects();
+	//gfx.SetDrawLayer(3.0f);
+	//se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
+	//	{
+	//		for (auto& pos : pathComp.path)
+	//		{
+	//			gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
+	//		}
+	//	});
+	gfx.EndView();
+}
