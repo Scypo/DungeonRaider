@@ -17,6 +17,8 @@ struct PathfindingComponent
     sl::Vec2f target{};
 };
 
+bool IsPathClear(sl::EntityId id, sl::Vec2f goal);
+bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size);
 
 class Pathfinder
 {
@@ -53,14 +55,14 @@ private:
         { 0, 1 },   // Down
         { 0, -1 },  // Up
     };
+    int eps = 10;
+    int accuracy = 3;
 public:
     Pathfinder() = default;
 	void FindPath(sl::EntityId id, sl::Vec2f goalWorld);
-	bool IsPathClear(sl::EntityId id, TilesetChunk& chunk, sl::Vec2i start, sl::Vec2i goal);
-	sl::Vec2f GetTraversablePos(sl::EntityId id, float distance, sl::Vec2i goal);
 private:
     int GetH(sl::Vec2i pos, sl::Vec2i goal);
-    bool IsValid(sl::Vec2i pos, TilesetChunk& chunk, sl::EntityId id);
+    bool IsValid(sl::Vec2i pos, TilesetChunk& chunk, sl::Vec2i size);
     void SetPath(sl::Vec2i startPos, sl::Vec2i goalPos, TilesetChunk& chunk, sl::EntityId id);
     void SmoothPath(std::vector<sl::Vec2f>& path, TilesetChunk& chunk, sl::EntityId id);
 };
@@ -69,5 +71,3 @@ class PathfindingSystem : public sl::System
 {
     void Run(float dt, sl::Scene& scene) override;
 };
-
-bool IsPathClear(sl::EntityId id, sl::Vec2f goal);

@@ -15,10 +15,11 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
             if (!entityWorldRect.IsContainedBy(sl::RectF(chunk.worldRect))) return;
             if (!chunk.worldRect.Contains(sl::Vec2i(goalWorld))) return;
 
-            sl::Vec2i start = chunk.WorldToGrid(entityWorldRect.GetCenter().x, entityWorldRect.GetCenter().y);
-            sl::Vec2i goal = chunk.WorldToGrid(goalWorld.x, goalWorld.y);
+            sl::Vec2i entitySize = sl::Vec2i(int(entityWorldRect.GetWidth()), int(entityWorldRect.GetHeight()));
+            sl::Vec2i start = sl::Vec2i(entityWorldRect.GetCenter());
+            sl::Vec2i goal = sl::Vec2i(goalWorld);
 
-            if (start == goal)
+            if ((start - goal).GetLength() < eps)
             {
                 LOG_DEBUG("start equal to goal " + std::to_string(id));
                 return;
@@ -29,10 +30,16 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
             parentMap.clear();
             costMap.clear();
 
-
-            if (!IsValid(start, chunk, id) || !IsValid(goal, chunk, id))
+            sl::Vec2i startGrid = chunk.WorldToGrid(float(start.x), float(start.y));
+            if (chunk.collisionGrid[startGrid.y * chunk.width + startGrid.x])
             {
-                LOG_DEBUG("pathfinding failed due to incorrect goal or start " + std::to_string(id));
+                LOG_DEBUG("pathfinding failed due to blocked start " + std::to_string(id));
+                return;
+            }
+            sl::Vec2i goalGrid = chunk.WorldToGrid(float(goalWorld.x), float(goalWorld.y));
+            if (chunk.collisionGrid[goalGrid.y * chunk.width + goalGrid.x])
+            {
+                LOG_DEBUG("pathfinding failed due to blocked goal" + std::to_string(id));
                 return;
             }
 
@@ -48,9 +55,9 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
                 Cell currentCell = openList.top();
                 openList.pop();
 
-                if (currentCell.pos == goal)
+                if ((currentCell.pos - goal).GetLength() < eps)
                 {
-                    SetPath(start, goal, chunk, id);
+                    SetPath(start, currentCell.pos, chunk, id);
                     return;
                 }
 
@@ -60,9 +67,9 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
 
                 for (const auto& dir : directions)
                 {
-                    sl::Vec2i neighborPos = { currentCell.pos.x + dir.x, currentCell.pos.y + dir.y };
+                    sl::Vec2i neighborPos = { currentCell.pos.x + dir.x * entitySize.x / accuracy, currentCell.pos.y + dir.y * entitySize.y / accuracy };
 
-                    if (!IsValid(neighborPos, chunk, id)) continue;
+                    if (!IsValid(neighborPos, chunk, entitySize)) continue;
 
                     bool isDiagonal = (dir.x != 0 && dir.y != 0);
                     
@@ -70,7 +77,7 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
                     {
                         sl::Vec2i adj1 = { currentCell.pos.x + dir.x, currentCell.pos.y };
                         sl::Vec2i adj2 = { currentCell.pos.x, currentCell.pos.y + dir.y };
-                        if (!IsValid(adj1, chunk, id) || !IsValid(adj2, chunk, id)) continue;
+                        if (!IsValid(adj1, chunk, entitySize) || !IsValid(adj2, chunk, entitySize)) continue;
                     }
 
                     int movementCost = isDiagonal ? 14 : 10;
@@ -89,35 +96,8 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
                     }
                 }
             }
-            LOG_DEBUG("path not found");
+            LOG_DEBUG("path not found" + std::to_string(id));
         });
-}
-
-bool Pathfinder::IsPathClear(sl::EntityId id, TilesetChunk& chunk, sl::Vec2i start, sl::Vec2i goal)
-{
-    int dx = std::abs(goal.x - start.x);
-    int dy = std::abs(goal.y - start.y);
-
-    int sx = (start.x < goal.x) ? 1 : -1;
-    int sy = (start.y < goal.y) ? 1 : -1;
-
-    int err = dx - dy;
-
-    sl::Vec2i pos = start;
-
-    while (true)
-    {
-        if (!IsValid(pos, chunk, id)) return false;
-
-        if (pos == goal)
-            break;
-
-        int e2 = 2 * err;
-        if (e2 > -dy) { err -= dy; pos.x += sx; }
-        if (e2 < dx) { err += dx; pos.y += sy; }
-    }
-
-    return true;
 }
 
 int Pathfinder::GetH(sl::Vec2i pos, sl::Vec2i goal)
@@ -128,28 +108,21 @@ int Pathfinder::GetH(sl::Vec2i pos, sl::Vec2i goal)
     return dx*dx + dy*dy;
 }
 
-bool Pathfinder::IsValid(sl::Vec2i pos, TilesetChunk& chunk, sl::EntityId id)
+bool Pathfinder::IsValid(sl::Vec2i worldPos, TilesetChunk& chunk, sl::Vec2i size)
 {
-    if (pos.x < 0 || pos.x >= chunk.width || pos.y < 0 || pos.y >= chunk.height) return false;
+    if (closedList.contains(worldPos)) return false;
 
-    if (closedList.contains(pos)) return false;
-    ColliderComponent& collider = se::Engine::GetECS().GetCurrentScene()->GetComponent<ColliderComponent>(id);
-    
-    int widthInTiles = int(std::ceil(collider.bounds.GetWidth() / float(chunk.tileSize)));
-    int heightInTiles = int(std::ceil(collider.bounds.GetHeight() / float(chunk.tileSize)));
+    int halfW = size.x / 2;
+    int halfH = size.y / 2;
 
-    int halfW = widthInTiles / 2;
-    int halfH = heightInTiles / 2;
-
-    for (int y = -halfH; y <= halfH; ++y)
+    for (int y = -halfH + worldPos.y - eps; y <= halfH + worldPos.y + eps; y += chunk.tileSize)
     {
-        for (int x = -halfW; x <= halfW; ++x)
+        for (int x = -halfW + worldPos.x - eps; x <= halfW + worldPos.x + eps; x += chunk.tileSize)
         {
-            int checkX = pos.x + x;
-            int checkY = pos.y + y;
+            sl::Vec2i checkPos = chunk.WorldToGrid(float(x), float(y));
 
-            if (checkX < 0 || checkX >= chunk.width || checkY < 0 || checkY >= chunk.height) return false;
-            if (chunk.collisionGrid[checkY * chunk.width + checkX]) return false;
+            if (checkPos.x < 0 || checkPos.x >= chunk.width || checkPos.y < 0 || checkPos.y >= chunk.height) return false;
+            if (chunk.collisionGrid[checkPos.y * chunk.width + checkPos.x]) return false;
         }
     }
 
@@ -161,12 +134,9 @@ void Pathfinder::SetPath(sl::Vec2i startPos, sl::Vec2i goalPos, TilesetChunk& ch
     std::vector<sl::Vec2f> path;
     
     sl::Vec2i currentPos = goalPos;
-    assert(parentMap.contains(goalPos));
     while (currentPos != startPos)
     {
-        sl::Vec2f pointPos = chunk.GridToWorld(currentPos.x, currentPos.y);
-        pointPos.x += chunk.tileSize / 2;
-        pointPos.y += chunk.tileSize / 2;
+        sl::Vec2f pointPos = sl::Vec2f(currentPos);
         path.push_back(pointPos);
         currentPos = parentMap.at(currentPos);
     }
@@ -178,6 +148,8 @@ void Pathfinder::SmoothPath(std::vector<sl::Vec2f>& rawPath, TilesetChunk& chunk
 {
     if (rawPath.size() < 2) return;
     std::vector<sl::Vec2f>& path = se::Engine::GetECS().GetCurrentScene()->GetComponent<PathfindingComponent>(id).path;
+    ColliderComponent& collider = se::Engine::GetECS().GetCurrentScene()->GetComponent<ColliderComponent>(id);
+    sl::Vec2f size = sl::Vec2f(collider.bounds.GetWidth(), collider.bounds.GetHeight());
     path.clear();
 
     size_t current = 0;
@@ -185,8 +157,9 @@ void Pathfinder::SmoothPath(std::vector<sl::Vec2f>& rawPath, TilesetChunk& chunk
 
     while (next < rawPath.size())
     {
-        while (next + 1 < rawPath.size() && IsPathClear(id, chunk, chunk.WorldToGrid(rawPath[current].x, rawPath[current].y), chunk.WorldToGrid(rawPath[next + 1].x, rawPath[next + 1].y)))
+        while (next + 1 < rawPath.size() && IsPathClear(rawPath[current], rawPath[next], size))
         {
+            break;
             next++;
         }
         path.push_back(rawPath[next]);
@@ -240,16 +213,16 @@ PathfindingComponent& PathfindingComponent::operator=(const PathfindingComponent
     return *this;
 }
 
-bool IsPathClear(sl::EntityId id, sl::Vec2f goalWorld)
+bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
 {
+    int eps = 10;
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     TilesetChunk* curChunk = nullptr;
-    sl::RectF worldCollider = GetWorldCollider(&scene, id);
-    
+
     scene.ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
         {
             if (curChunk) return;
-            if (worldCollider.IsContainedBy(sl::RectF(chunk.worldRect)) && chunk.worldRect.Contains(sl::Vec2i(goalWorld)))
+            if (chunk.worldRect.Contains(sl::Vec2i(start)) && chunk.worldRect.Contains(sl::Vec2i(goal)))
             {
                 curChunk = &chunk;
             }
@@ -257,49 +230,53 @@ bool IsPathClear(sl::EntityId id, sl::Vec2f goalWorld)
 
     if (!curChunk) return false;
 
-    sl::Vec2i start = curChunk->WorldToGrid(worldCollider.GetCenter().x, worldCollider.GetCenter().y);
-    sl::Vec2i goal = curChunk->WorldToGrid(goalWorld.x, goalWorld.y);
-
-    int colliderTileWidth = std::max(1, int(std::ceil(worldCollider.GetWidth() / curChunk->tileSize)));
-    int colliderTileHeight = std::max(1, int(std::ceil(worldCollider.GetHeight() / curChunk->tileSize)));
-
+    int jumpLen = 5;
     int dx = std::abs(goal.x - start.x);
     int dy = -std::abs(goal.y - start.y);
-    int sx = start.x < goal.x ? 1 : -1;
-    int sy = start.y < goal.y ? 1 : -1;
+    int sx = start.x < goal.x ? jumpLen : -jumpLen;
+    int sy = start.y < goal.y ? jumpLen : -jumpLen;
     int err = dx + dy;
 
-    sl::Vec2i tile = start;
-    while (true)
+    sl::Vec2f pos = start;
+    int halfW = size.x / 2;
+    int halfH = size.y / 2;
+
+    while ((pos - goal).GetLength() < eps)
     {
-        for (int y = 0; y < colliderTileHeight; y++)
+
+        for (int y = -halfH + pos.y; y <= halfH + pos.y; y += curChunk->tileSize)
         {
-            for (int x = 0; x < colliderTileWidth; x++)
+            for (int x = -halfW + pos.x; x <= halfW + pos.x; x += curChunk->tileSize)
             {
-                int checkX = tile.x + x - colliderTileWidth / 2;
-                int checkY = tile.y + y - colliderTileHeight / 2;
+                sl::Vec2i checkPos = curChunk->WorldToGrid(x, y);
 
-                if (checkX < 0 || checkY < 0 || checkX >= curChunk->width || checkY >= curChunk->height) return false;
-
-                size_t index = checkY * curChunk->width + checkX;
-                if (curChunk->collisionGrid[index]) return false;
+                if (checkPos.x < 0 || checkPos.x >= curChunk->width || checkPos.y < 0 || checkPos.y >= curChunk->height) return false;
+                if (curChunk->collisionGrid[checkPos.y * curChunk->width + checkPos.x]) return false;
             }
         }
-
-        if (tile == goal) break;
 
         int e2 = 2 * err;
         if (e2 >= dy)
         {
             err += dy;
-            tile.x += sx;
+            pos.x += sx;
         }
         if (e2 <= dx)
         {
             err += dx;
-            tile.y += sy;
+            pos.y += sy;
         }
     }
-    
+
     return true;
+}
+
+bool IsPathClear(sl::EntityId id, sl::Vec2f goalWorld)
+{
+    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
+    TilesetChunk* curChunk = nullptr;
+    sl::RectF worldCollider = GetWorldCollider(&scene, id);
+    sl::Vec2f size = sl::Vec2f(worldCollider.GetWidth(), worldCollider.GetHeight());
+    
+    return IsPathClear(worldCollider.GetCenter(), goalWorld, size);
 }
