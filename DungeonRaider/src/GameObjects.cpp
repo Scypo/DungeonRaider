@@ -45,7 +45,7 @@ sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, sl::Texture* 
 	sl::EntityId enemy = scene->CreateEntity();
 	scene->AddComponent<EnemyTag>(enemy, EnemyTag{});
 	scene->AddComponent<PathfindingComponent>(enemy, PathfindingComponent{});
-	scene->AddComponent<EnemyBehaviorComponent>(enemy, EnemyBehaviorComponent{ BehaviorStage::Approach, 100.0f, 1.0f, 0.0f, {} });
+	scene->AddComponent<EnemyBehaviorComponent>(enemy, EnemyBehaviorComponent{ BehaviorStage::Approach, 200.0f, 1.0f, 0.0f, 5, 5, {} });
 	scene->AddComponent<HealthComponent>(enemy, HealthComponent{ 100.0f });
 	scene->AddComponent<TransformComponent>(enemy, TransformComponent{ pos, 0.0f });
 	scene->AddComponent<MovementComponent>(enemy, MovementComponent{});

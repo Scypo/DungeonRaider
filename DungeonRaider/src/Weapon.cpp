@@ -3,11 +3,11 @@
 #include"Components.h"
 #include"Events.h"
 
-void WeaponAttack(sl::EntityId id, sl::Vec2f target)
+bool WeaponAttack(sl::EntityId id, sl::Vec2f target)
 {
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
-    if (weapon.remainingTime > 0) return;
+    if (weapon.remainingTime > 0) return false;
     ProjectileData& data = weapon.projectileData;
     weapon.remainingTime = weapon.cooldown;
     sl::RectF entityRect = GetWorldCollider(&scene, id);
@@ -25,6 +25,7 @@ void WeaponAttack(sl::EntityId id, sl::Vec2f target)
     scene.AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, data.width, 0, data.height), ColliderComponent::CollisionLayer::GameObjects });
     scene.AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(data.width / 2, data.height / 2), data.texture,
         sl::RectF(0.0f, data.width, 0.0f, data.height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(data.width, data.height), nullptr));
+    return true;
 }
 
 void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)

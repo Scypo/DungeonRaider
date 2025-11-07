@@ -30,7 +30,7 @@ struct Projectile
     float damage = 0;
 };
 
-void WeaponAttack(sl::EntityId id, sl::Vec2f target);
+bool WeaponAttack(sl::EntityId id, sl::Vec2f target);
 
 class ProjectileCollisionSystem : public sl::System
 {
