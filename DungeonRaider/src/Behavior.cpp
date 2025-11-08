@@ -49,7 +49,7 @@ void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 						std::uniform_int_distribution<std::mt19937::result_type> attacks(behav.attackLimit / 2, behav.attackLimit);
 						behav.attacksLeft = attacks(rng);
 						behav.behavior = BehaviorStage::Retreat;
-						pathComp.target = FindRetreatPos(id, 70.0f);
+						pathComp.target = FindRetreatPos(id, 70.0f, playerPos);
 						pathComp.suspended = false;
 					}
 						break;
@@ -66,7 +66,7 @@ void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 			});
 }
 
-sl::Vec2f FindRetreatPos(sl::EntityId id, float range)
+sl::Vec2f FindRetreatPos(sl::EntityId id, float range, const sl::Vec2f playerPos)
 {
 	std::uniform_real_distribution<float> dirX(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> dirY(-1.0f, 1.0f);
@@ -84,10 +84,26 @@ sl::Vec2f FindRetreatPos(sl::EntityId id, float range)
 	assert(chunk);
 
 	sl::Vec2f dir{};
-	do
+	float distFromPlayer = 0.0f;
+	float minDist = float(std::max(collider.GetWidth(), collider.GetHeight())) * 2.0f;
+	minDist *= minDist;
+
+	for (int tries = 0; tries < 100 && dir.GetLength() < 0.0001f && distFromPlayer < minDist; tries++)
 	{
 		dir = { dirX(rng), dirY(rng) };
-	} while (dir.GetLength() < 0.0001f);
+		dir.Normalize();
+
+		float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+		if (len < 0.0001f) continue;
+		dir.x /= len;
+		dir.y /= len;
+
+		sl::Vec2f toPlayer = { playerPos.x - collider.GetCenter().x, playerPos.y - collider.GetCenter().y };
+		float proj = toPlayer.x * dir.x + toPlayer.y * dir.y;
+		sl::Vec2f closestPoint = { collider.GetCenter().x + dir.x * proj, collider.GetCenter().y + dir.y * proj };
+
+		float distToLine = std::sqrt((closestPoint.x - playerPos.x) * (closestPoint.x - playerPos.x) + (closestPoint.y - playerPos.y) * (closestPoint.y - playerPos.y));
+	}
 	
 	sl::Vec2f pos = collider.GetCenter();
 

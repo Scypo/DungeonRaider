@@ -12,7 +12,7 @@ enum class BehaviorStage
 	Retreat
 };
 
-sl::Vec2f FindRetreatPos(sl::EntityId id, float range);
+sl::Vec2f FindRetreatPos(sl::EntityId id, float range, const sl::Vec2f playerPos);
 
 struct EnemyBehaviorComponent
 {
