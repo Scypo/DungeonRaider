@@ -21,6 +21,7 @@ class ExecuteEventSystem : public sl::System
 	void Run(float dt, sl::Scene& scene) override;
 };
 
+void DrawSprites();
 class RenderSystem : public sl::System
 {
 	void Run(float dt, sl::Scene& scene) override;

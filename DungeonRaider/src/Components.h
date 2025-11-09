@@ -1,5 +1,14 @@
 #pragma once
-#include<ScypLib/ScypLib.h>
+#include<ScypEngine/Engine.h>
+
+struct GameGlobals
+{
+	inline static float score = 0.0f;
+	inline static sl::EntityId player = -1;
+	inline static sl::EntityId camera = -1;
+	inline static sl::EntityId currentRoom = -1;
+	inline static float elapsedTime = 0.0f;
+};
 
 struct TransformComponent
 {
@@ -56,10 +65,19 @@ struct SpriteComponent
 struct HealthComponent
 {
 	float health = 0.0f;
+	float maxHealth = 0.0f;
 };
-struct PlayerTag {};
 
-struct EnemyTag {};
+enum class Tags
+{
+	player = 1 << 0,
+	enemy = 1 << 1
+};
+
+struct TagComponent
+{
+	uint32_t tag = 0;
+};
 
 struct Camera
 {
@@ -68,21 +86,23 @@ struct Camera
 	bool active = true;
 };
 
-struct GameContext
+inline sl::EntityId CreateCamera()
 {
-	inline static float score = 0.0f;
-	inline static sl::EntityId player = -1;
-	inline static sl::EntityId camera = -1;
-	inline static sl::EntityId currentRoom = -1;
-	inline static float elapsedTime = 0.0f;
-};
+	sl::EntityComponentSystem& ecs = se::Engine::GetECS();
+	sl::Scene* scene = ecs.GetCurrentScene();
 
-inline sl::RectF GetWorldCollider(sl::Scene* scene, sl::EntityId id)
+	sl::EntityId camera = scene->CreateEntity();
+	scene->AddComponent<Camera>(camera, Camera{});
+	GameGlobals::camera = camera;
+	return camera;
+}
+
+inline sl::RectF GetWorldCollider(sl::EntityId id)
 {
-	assert(scene);
-	assert(scene->HasComponent<TransformComponent>(id) && scene->HasComponent<ColliderComponent>(id));
-	TransformComponent& transform = scene->GetComponent<TransformComponent>(id);
-	ColliderComponent& collider = scene->GetComponent<ColliderComponent>(id);
+	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
+	assert(scene.HasComponent<TransformComponent>(id) && scene.HasComponent<ColliderComponent>(id));
+	TransformComponent& transform = scene.GetComponent<TransformComponent>(id);
+	ColliderComponent& collider = scene.GetComponent<ColliderComponent>(id);
 	sl::RectF entityWorldRect;
 	entityWorldRect.left = transform.pos.x + collider.bounds.left;
 	entityWorldRect.top = transform.pos.y + collider.bounds.top;

@@ -9,14 +9,14 @@ static std::mt19937 rng(dev());
 
 void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 {
-	sl::Vec2f playerPos = GetWorldCollider(&scene, GameContext::player).GetCenter();
+	sl::Vec2f playerPos = GetWorldCollider(GameGlobals::player).GetCenter();
 	
 	scene.ForEach<EnemyBehaviorComponent, MovementComponent, PathfindingComponent, WeaponComponent>([&](sl::EntityId id, EnemyBehaviorComponent& behav, MovementComponent& movement, PathfindingComponent& pathComp, WeaponComponent& weapon)
 		{		
 			if (behav.behavior == BehaviorStage::Idle) return;
 			behav.target = playerPos;
 
-			bool inRange = behav.approachRange >= (playerPos - GetWorldCollider(&scene, id).GetCenter()).GetLength();
+			bool inRange = behav.approachRange >= (playerPos - GetWorldCollider(id).GetCenter()).GetLength();
 			bool clearPath = IsPathClear(id, playerPos);
 				switch (behav.behavior)
 				{
@@ -35,7 +35,7 @@ void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 						break;
 				case BehaviorStage::Attack:
 					movement.dir = { 0.0f, 0.0f };
-					if (WeaponAttack(id, behav.target))
+					if (WeaponAttack(id, behav.target, TagComponent { 0 | uint32_t(Tags::enemy) }))
 					{
 						behav.attacksLeft--;
 					}
@@ -74,9 +74,9 @@ sl::Vec2f FindRetreatPos(sl::EntityId id, float range, const sl::Vec2f playerPos
 	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
 
 	TilesetChunk* chunk = nullptr;
-	sl::RectF collider = GetWorldCollider(&scene, id);
-	int halfW = collider.GetWidth() / 2;
-	int halfH = collider.GetHeight() / 2;
+	sl::RectF collider = GetWorldCollider(id);
+	int halfW = int(collider.GetWidth()) / 2;
+	int halfH = int(collider.GetHeight()) / 2;
 	scene.ForEach<TilesetChunk>([&](sl::EntityId checkId, TilesetChunk& checkChunk)
 		{
 			if (!chunk && collider.IsContainedBy(sl::RectF(checkChunk.worldRect))) chunk = &checkChunk;

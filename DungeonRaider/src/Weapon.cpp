@@ -3,36 +3,29 @@
 #include"Components.h"
 #include"Events.h"
 
-bool WeaponAttack(sl::EntityId id, sl::Vec2f target)
+bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
     if (weapon.remainingTime > 0) return false;
     ProjectileData& data = weapon.projectileData;
     weapon.remainingTime = weapon.cooldown;
-    sl::RectF entityRect = GetWorldCollider(&scene, id);
+    sl::RectF entityRect = GetWorldCollider(id);
     sl::Vec2f weaponOrigin = sl::Vec2f(entityRect.GetCenter());
 
 
     sl::Vec2f dir = (target - weaponOrigin).GetNormalized();
     sl::Vec2f bulletSpawn = weaponOrigin - sl::Vec2f(data.width / 2, data.height / 2);
 
-    sl::EntityId projectile;
-    projectile = scene.CreateEntity();
-    scene.AddComponent<Projectile>(projectile, Projectile{ id, data.damage });
-    scene.AddComponent<TransformComponent>(projectile, TransformComponent{ bulletSpawn, 0.0f });
-    scene.AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, data.speed });
-    scene.AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, data.width, 0, data.height), ColliderComponent::CollisionLayer::GameObjects });
-    scene.AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(data.width / 2, data.height / 2), data.texture,
-        sl::RectF(0.0f, data.width, 0.0f, data.height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(data.width, data.height), nullptr));
+    CreateProjectile(bulletSpawn, dir, &data, immune);
     return true;
 }
 
 void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
 {
-    scene.ForEach<Projectile, TransformComponent, ColliderComponent, MovementComponent>([&](sl::EntityId id, Projectile& projectile, TransformComponent& transform, ColliderComponent& collider, MovementComponent& movement)
+    scene.ForEach<Projectile, TransformComponent, ColliderComponent, MovementComponent, TagComponent>([&](sl::EntityId id, Projectile& projectile, TransformComponent& transform, ColliderComponent& collider, MovementComponent& movement, TagComponent& tag)
         {
-            sl::RectF projectileWorldRect = GetWorldCollider(&scene, id);
+            sl::RectF projectileWorldRect = GetWorldCollider(id);
 
             scene.ForEach<TilesetChunk>([&](sl::EntityId tilesetId, TilesetChunk& chunk)
                 {
@@ -74,10 +67,14 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                 });
             scene.ForEach<ColliderComponent, HealthComponent>([&](sl::EventId target, ColliderComponent& targetCollider, HealthComponent& targetHealth)
                 {
-                    sl::RectF targetWorldRect = GetWorldCollider(&scene, target);
-                    if (targetWorldRect.IsOverlappingWith(projectileWorldRect) && target != projectile.creator)
+                    if (scene.HasComponent<TagComponent>(target))
                     {
-                        if (target == GameContext::player) return;//TEMPORARY SO PLAYER DOESNT DIE
+                        if (scene.GetComponent<TagComponent>(target).tag & tag.tag) return;
+                    }
+                    sl::RectF targetWorldRect = GetWorldCollider(target);
+                    if (targetWorldRect.IsOverlappingWith(projectileWorldRect))
+                    {
+                        if (target == GameGlobals::player) return;//TEMPORARY SO PLAYER DOESNT DIE
                         scene.GetEventBus().Emit<DealDamageEvent>(DealDamageEvent{ target, projectile.damage });
                         scene.DestroyEntity(id);
                     }
@@ -91,4 +88,22 @@ void WeaponSystem::Run(float dt, sl::Scene& scene)
         {
             weapon.remainingTime -= dt;
         });
+}
+
+sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, const ProjectileData* data, TagComponent immune)
+{
+    sl::EntityComponentSystem& ecs = se::Engine::GetECS();
+    sl::Scene* scene = ecs.GetCurrentScene();
+
+    sl::EntityId projectile;
+    projectile = scene->CreateEntity();
+    scene->AddComponent<Projectile>(projectile, Projectile{ data->damage });
+    scene->AddComponent<TagComponent>(projectile, std::move(immune));
+    scene->AddComponent<TransformComponent>(projectile, TransformComponent{ pos, 0.0f });
+    scene->AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, data->speed });
+    scene->AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, data->width, 0, data->height), ColliderComponent::CollisionLayer::GameObjects });
+    scene->AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(data->width / 2, data->height / 2), data->texture,
+        sl::RectF(0.0f, data->width, 0.0f, data->height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(data->width, data->height), nullptr));
+
+    return projectile;
 }

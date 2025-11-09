@@ -1,6 +1,6 @@
 #pragma once
 #include"ScypEngine/Engine.h"
-
+#include"Components.h"
 
 struct ProjectileData
 {
@@ -26,11 +26,11 @@ struct WeaponComponent
 
 struct Projectile
 {
-    sl::EntityId creator = 0;
     float damage = 0;
 };
 
-bool WeaponAttack(sl::EntityId id, sl::Vec2f target);
+sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, const ProjectileData* data, TagComponent immune);
+bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune = {});
 
 class ProjectileCollisionSystem : public sl::System
 {

@@ -156,7 +156,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Behavior.cpp" />
-    <ClCompile Include="src\Components.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\GameObjects.cpp" />
     <ClCompile Include="src\Level.cpp" />

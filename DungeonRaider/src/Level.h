@@ -69,9 +69,11 @@ struct TilesetChunk
 	int height = 0;
 	int tileSize = 0;
 };
+
+sl::EntityId CreateTileChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture);
 void SpawnObstacles(TilesetChunk& chunk, RoomTrigger& trigger);
 void SpawnRoom(TilesetChunk& chunk, RoomTrigger& trigger);
-
+void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most);
 void CreateLevel();
 void DrawLevel();
 

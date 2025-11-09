@@ -19,17 +19,17 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 	auto& kbd = se::Engine::GetKeyboard();
 	auto& mouse = se::Engine::GetMouse();
 
-	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameContext::player);
+	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameGlobals::player);
 	movement.dir = { 0.0f,0.0f };
 	if (kbd.KeyIsPressed('W')) movement.dir.y -= 1.0f;
 	if (kbd.KeyIsPressed('S')) movement.dir.y += 1.0f;
 	if (kbd.KeyIsPressed('A')) movement.dir.x -= 1.0f;
 	if (kbd.KeyIsPressed('D')) movement.dir.x += 1.0f;
 
-	WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(GameContext::player);
+	WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(GameGlobals::player);
 	if(mouse.LeftIsPressed())
 	{
-		Camera& cam = scene.GetComponent<Camera>(GameContext::camera);
+		Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 		sl::Vec2f mouseScreen = mouse.GetPos();
 		sl::Vec2f mouseCanvas = sl::Vec2f{
 			mouseScreen.x * (se::Engine::GetGraphics().GetCanvasWidth() / se::Engine::GetWindow().GetWidth()),
@@ -37,10 +37,9 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 		};
 		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
 
-		WeaponAttack(GameContext::player, mouseWorldPos);
+		WeaponAttack(GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
 	}
 	weapon.remainingTime -= dt;
-	
 }
 
 void CameraSystem::Run(float dt, sl::Scene& scene)
@@ -49,7 +48,7 @@ void CameraSystem::Run(float dt, sl::Scene& scene)
 		{
 			if(cam.active)
 			{
-				cam.pos = scene.GetComponent<TransformComponent>(GameContext::player).pos;
+				cam.pos = scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
 
 				cam.pos.x -= se::Engine::GetGraphics().GetCanvasWidth() * 0.5f;
 				cam.pos.y -= se::Engine::GetGraphics().GetCanvasHeight() * 0.5f;
@@ -69,13 +68,15 @@ void ExecuteEventSystem::Run(float dt, sl::Scene& scene)
 void RenderSystem::Run(float dt, sl::Scene& scene)
 {
 	sl::Graphics& gfx = se::Engine::GetGraphics();
-	Camera& cam = scene.GetComponent<Camera>(GameContext::camera);
+	Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 	gfx.BeginView(cam.pos, cam.zoom);
 	gfx.SetDrawLayer(0.0f);
 	DrawLevel();
 	gfx.SetDrawLayer(2.0f);
-	DrawGameObjects();
-	//gfx.SetDrawLayer(3.0f);
+	DrawSprites();
+	gfx.SetDrawLayer(3.0f);
+	DrawHealthBars();
+	//gfx.SetDrawLayer(4.0f);
 	//se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
 	//	{
 	//		for (auto& pos : pathComp.path)
@@ -84,4 +85,22 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	//		}
 	//	});
 	gfx.EndView();
+}
+
+void DrawSprites()
+{
+	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	scene.ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
+		{
+			if (sprite.texture)
+			{
+				gfx.DrawTexture(transform.pos + sprite.offset, sprite.size, sprite.texture, sprite.shader,
+					sprite.flip.x, sprite.flip.y, sprite.angle, sprite.pivot, &sprite.uv, sprite.tint);
+			}
+			else
+			{
+				gfx.DrawRect(transform.pos + sprite.offset, sprite.size, sprite.tint);
+			}
+		});
 }

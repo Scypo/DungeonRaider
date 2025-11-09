@@ -2,6 +2,7 @@
 #include"ScypEngine/Engine.h"
 #include"Level.h"
 #include"Components.h"
+#include"ScypLib/Logger.h"
 
 static Pathfinder pathfinder;
 
@@ -9,7 +10,7 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
 {
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     
-    sl::RectF entityWorldRect = GetWorldCollider(&scene, id);
+    sl::RectF entityWorldRect = GetWorldCollider(id);
     scene.ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
         {
             if (!entityWorldRect.IsContainedBy(sl::RectF(chunk.worldRect))) return;
@@ -176,7 +177,7 @@ void PathfindingSystem::Run(float dt, sl::Scene& scene)
         {
             if (pathComp.suspended) return;
             pathComp.timeSincePathfining += dt;
-            sl::RectF worldCollider = GetWorldCollider(&scene, id);
+            sl::RectF worldCollider = GetWorldCollider(id);
             if (pathComp.pathLifetime <= pathComp.timeSincePathfining || pathComp.path.empty())
             {
                 pathComp.timeSincePathfining = 0.0f;
@@ -189,7 +190,7 @@ void PathfindingSystem::Run(float dt, sl::Scene& scene)
             if (!pathComp.path.empty())
             {
                 sl::Vec2f targetPos = pathComp.path.back();
-                movement.dir = sl::Vec2f(targetPos - GetWorldCollider(&scene, id).GetCenter()).GetNormalized();
+                movement.dir = sl::Vec2f(targetPos - GetWorldCollider(id).GetCenter()).GetNormalized();
             }
             else
             {
@@ -231,8 +232,8 @@ bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
     if (!curChunk) return false;
 
     int jumpLen = 5;
-    int dx = std::abs(goal.x - start.x);
-    int dy = -std::abs(goal.y - start.y);
+    int dx = std::abs(int(goal.x - start.x));
+    int dy = -std::abs(int(goal.y - start.y));
     int sx = start.x < goal.x ? jumpLen : -jumpLen;
     int sy = start.y < goal.y ? jumpLen : -jumpLen;
     int err = dx + dy;
@@ -248,7 +249,7 @@ bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
         {
             for (int x = -halfW + pos.x; x <= halfW + pos.x; x += curChunk->tileSize)
             {
-                sl::Vec2i checkPos = curChunk->WorldToGrid(x, y);
+                sl::Vec2i checkPos = curChunk->WorldToGrid(float(x), float(y));
 
                 if (checkPos.x < 0 || checkPos.x >= curChunk->width || checkPos.y < 0 || checkPos.y >= curChunk->height) return false;
                 if (curChunk->collisionGrid[checkPos.y * curChunk->width + checkPos.x]) return false;
@@ -275,7 +276,7 @@ bool IsPathClear(sl::EntityId id, sl::Vec2f goalWorld)
 {
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     TilesetChunk* curChunk = nullptr;
-    sl::RectF worldCollider = GetWorldCollider(&scene, id);
+    sl::RectF worldCollider = GetWorldCollider(id);
     sl::Vec2f size = sl::Vec2f(worldCollider.GetWidth(), worldCollider.GetHeight());
     
     return IsPathClear(worldCollider.GetCenter(), goalWorld, size);

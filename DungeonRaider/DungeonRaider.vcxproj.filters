@@ -30,9 +30,6 @@
     <ClCompile Include="src\GameObjects.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Components.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Pathfinder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

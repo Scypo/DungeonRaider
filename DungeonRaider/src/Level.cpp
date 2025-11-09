@@ -209,7 +209,7 @@ void CreateLevel()
 
         if (i == 4)
         {
-            GameContext::currentRoom = chunkId;
+            GameGlobals::currentRoom = chunkId;
             scene.GetComponent<RoomTrigger>(chunkId).state = RoomTrigger::State::Explored;
             scene.GetComponent<RoomEncounter>(chunkId) = RoomEncounter{};
         }
@@ -220,7 +220,7 @@ void DrawLevel()
 {
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     sl::Graphics& gfx = se::Engine::GetGraphics();
-    Camera& cam = scene.GetComponent<Camera>(GameContext::camera);
+    Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 
     scene.ForEach<TilesetChunk, TransformComponent>([&](sl::EntityId id, TilesetChunk& chunk, TransformComponent& transform)
         {
@@ -396,8 +396,8 @@ RoomTrigger::RoomTrigger(const RoomTrigger& other)
 void LevelSystem::Run(float dt, sl::Scene& scene)
 {
     sl::RectF playerWorldRect;
-    TransformComponent& transform = scene.GetComponent<TransformComponent>(GameContext::player);
-    ColliderComponent& collider = scene.GetComponent<ColliderComponent>(GameContext::player);
+    TransformComponent& transform = scene.GetComponent<TransformComponent>(GameGlobals::player);
+    ColliderComponent& collider = scene.GetComponent<ColliderComponent>(GameGlobals::player);
     
     playerWorldRect.left = transform.pos.x + collider.bounds.left;
     playerWorldRect.top = transform.pos.y + collider.bounds.top;
@@ -410,9 +410,9 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
         {
             if (newRoomFound) return;
 
-            if (triggerId != GameContext::currentRoom && playerWorldRect.IsContainedBy(trigger.worldBounds))
+            if (triggerId != GameGlobals::currentRoom && playerWorldRect.IsContainedBy(trigger.worldBounds))
             {
-                sl::EntityId prevRoom = GameContext::currentRoom;
+                sl::EntityId prevRoom = GameGlobals::currentRoom;
                 sl::EntityId curRoom = triggerId;
                 TransformComponent& prevTransform = scene.GetComponent<TransformComponent>(prevRoom);
                 scene.DestroyEntity(prevRoom);
@@ -469,16 +469,16 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                     CreateTileChunk(sl::Vec2i(transform.pos + delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
                 }
 
-                GameContext::currentRoom = curRoom;
+                GameGlobals::currentRoom = curRoom;
                 newRoomFound = true;
             }
         });
 
-    sl::RectF& roomBounds = scene.GetComponent<RoomTrigger>(GameContext::currentRoom).worldBounds;
+    sl::RectF& roomBounds = scene.GetComponent<RoomTrigger>(GameGlobals::currentRoom).worldBounds;
     bool roomCleared = true;
-    scene.ForEach<EnemyTag, TransformComponent, ColliderComponent>([&](sl::EntityId, EnemyTag& tag, TransformComponent& transform, ColliderComponent& collider)
+    scene.ForEach<TagComponent, TransformComponent, ColliderComponent>([&](sl::EntityId, TagComponent& tag, TransformComponent& transform, ColliderComponent& collider)
         {
-            if (!roomCleared) return;
+            if (!roomCleared || (tag.tag & uint32_t(Tags::enemy)) == 0) return;
             sl::RectF enemyWorldRect;
             enemyWorldRect.left = transform.pos.x + collider.bounds.left;
             enemyWorldRect.top = transform.pos.y + collider.bounds.top;
@@ -489,11 +489,11 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
 
     if (roomCleared)
     {
-        RoomTrigger& trigger = scene.GetComponent<RoomTrigger>(GameContext::currentRoom);
+        RoomTrigger& trigger = scene.GetComponent<RoomTrigger>(GameGlobals::currentRoom);
         if (trigger.state == RoomTrigger::State::Exploring)
         {
-            TilesetChunk& chunk = scene.GetComponent<TilesetChunk>(GameContext::currentRoom);
-            RoomEncounter& encounter = scene.GetComponent<RoomEncounter>(GameContext::currentRoom);
+            TilesetChunk& chunk = scene.GetComponent<TilesetChunk>(GameGlobals::currentRoom);
+            RoomEncounter& encounter = scene.GetComponent<RoomEncounter>(GameGlobals::currentRoom);
             
             if (encounter.wavesLeft > 0 && encounter.deleyLeft <= 0.0f)
             {
@@ -587,4 +587,89 @@ void TileCollisionSystem::Run(float dt, sl::Scene& scene)
             transform.pos = movement.proposedPos;
         });
 
+}
+
+sl::EntityId CreateTileChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture)
+{
+    sl::EntityComponentSystem& ecs = se::Engine::GetECS();
+    sl::Scene* scene = ecs.GetCurrentScene();
+    sl::EntityId chunkId = scene->CreateEntity();
+
+    TilesetChunk chunk(pos, width, height, tileSize, texture);
+    RoomTrigger trigger;
+
+    SpawnRoom(chunk, trigger);
+    SpawnObstacles(chunk, trigger);
+
+    scene->AddComponent<TilesetChunk>(chunkId, std::move(chunk));
+    scene->AddComponent<RoomTrigger>(chunkId, std::move(trigger));
+    scene->AddComponent<TransformComponent>(chunkId, TransformComponent{ sl::Vec2f(pos), 0.0f });
+    scene->AddComponent<RoomEncounter>(chunkId, RoomEncounter{ 1,2,5,1.0f,1.0f });
+    return chunkId;
+}
+
+void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most)
+{
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> countDist(least, most);
+
+    constexpr float biggestEnemySize = 40.0f;
+    constexpr float smallestDistance = 2.0f * biggestEnemySize;
+
+    std::uniform_real_distribution<float> xDist(trigger.worldBounds.left + 2.0f * biggestEnemySize, trigger.worldBounds.right - 2.0f * biggestEnemySize);
+    std::uniform_real_distribution<float> yDist(trigger.worldBounds.top + 2.0f * biggestEnemySize, trigger.worldBounds.bottom - 2.0f * biggestEnemySize);
+
+    int count = countDist(rng);
+
+    int enemyWidthInTiles = 3;
+    int enemyHeightInTiles = 3;
+
+    auto blocks([&](int x, int y) -> bool
+        {
+            if (x < 0 || y < 0 || x >= chunk.width || y >= chunk.height) return true;
+            return chunk.collisionGrid[y * chunk.width + x];
+        });
+    std::vector<sl::Vec2f> usedPos;
+    usedPos.reserve(count);
+
+    for (int i = 0; i < count; i++)
+    {
+        sl::Vec2f spawnPos{};
+        bool valid = true;
+
+        for (int attempts = 0; attempts < 100; attempts++)
+        {
+            valid = true;
+            spawnPos = { xDist(rng), yDist(rng) };
+
+            for (auto& pos : usedPos)
+            {
+                if ((pos - spawnPos).GetLength() < smallestDistance) valid = false;
+            }
+
+            sl::Vec2i gridTL = chunk.WorldToGrid(spawnPos.x, spawnPos.y);
+            sl::Vec2i gridBR = chunk.WorldToGrid(spawnPos.x + biggestEnemySize, spawnPos.y + biggestEnemySize);
+
+            if (gridTL.x < 0 || gridTL.y < 0 || gridBR.x >= chunk.width || gridBR.y >= chunk.height)
+            {
+                valid = false;
+                continue;
+            }
+
+            for (int y = gridTL.y; y <= gridBR.y && valid; y++)
+            {
+                for (int x = gridTL.x; x <= gridBR.x; x++)
+                {
+                    if (blocks(x, y)) valid = false;
+                }
+            }
+            if (valid) break;
+        }
+        if (valid)
+        {
+            usedPos.push_back(spawnPos);
+            CreateEnemy(spawnPos, 40.0f, 40.0f, nullptr);
+        }
+    }
 }
