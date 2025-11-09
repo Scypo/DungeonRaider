@@ -116,14 +116,14 @@ bool Pathfinder::IsValid(sl::Vec2i worldPos, TilesetChunk& chunk, sl::Vec2i size
     int halfW = size.x / 2;
     int halfH = size.y / 2;
 
-    for (int y = -halfH + worldPos.y - eps; y <= halfH + worldPos.y + eps; y += chunk.tileSize)
-    {
-        for (int x = -halfW + worldPos.x - eps; x <= halfW + worldPos.x + eps; x += chunk.tileSize)
-        {
-            sl::Vec2i checkPos = chunk.WorldToGrid(float(x), float(y));
+    sl::Vec2i topLeft = chunk.WorldToGrid(worldPos.x - halfW, worldPos.y - halfH);
+    sl::Vec2i bottomRight = chunk.WorldToGrid(worldPos.x + halfW, worldPos.y + halfH);
 
-            if (checkPos.x < 0 || checkPos.x >= chunk.width || checkPos.y < 0 || checkPos.y >= chunk.height) return false;
-            if (chunk.collisionGrid[checkPos.y * chunk.width + checkPos.x]) return false;
+    for (int y = topLeft.y; y <= bottomRight.y; y++)
+    {
+        for (int x = topLeft.x; x <= bottomRight.x; x++)
+        {
+            if (chunk.collisionGrid[y * chunk.width + x]) return false;
         }
     }
 
@@ -242,17 +242,17 @@ bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
     int halfW = size.x / 2;
     int halfH = size.y / 2;
 
-    while ((pos - goal).GetLength() < eps)
+    while ((pos - goal).GetLength() > eps)
     {
 
-        for (int y = -halfH + pos.y; y <= halfH + pos.y; y += curChunk->tileSize)
-        {
-            for (int x = -halfW + pos.x; x <= halfW + pos.x; x += curChunk->tileSize)
-            {
-                sl::Vec2i checkPos = curChunk->WorldToGrid(float(x), float(y));
+        sl::Vec2i topLeft = curChunk->WorldToGrid(pos.x - halfW, pos.y - halfH);
+        sl::Vec2i bottomRight = curChunk->WorldToGrid(pos.x + halfW, pos.y + halfH);
 
-                if (checkPos.x < 0 || checkPos.x >= curChunk->width || checkPos.y < 0 || checkPos.y >= curChunk->height) return false;
-                if (curChunk->collisionGrid[checkPos.y * curChunk->width + checkPos.x]) return false;
+        for (int y = topLeft.y; y <= bottomRight.y; y++)
+        {
+            for (int x = topLeft.x; x <= bottomRight.x; x++)
+            {
+                if (curChunk->collisionGrid[y * curChunk->width + x]) return false;
             }
         }
 

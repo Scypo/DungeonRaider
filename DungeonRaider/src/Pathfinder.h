@@ -56,7 +56,7 @@ private:
         { 0, -1 },  // Up
     };
     int eps = 10;
-    int accuracy = 3;
+    int accuracy = 2;
 public:
     Pathfinder() = default;
 	void FindPath(sl::EntityId id, sl::Vec2f goalWorld);

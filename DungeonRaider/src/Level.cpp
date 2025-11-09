@@ -96,7 +96,12 @@ sl::Vec2i TilesetChunk::WorldToGrid(float x, float y) const
 {
     int gx = int((x - worldRect.left) / tileSize);
     int gy = int((y - worldRect.top) / tileSize);
-    if (gx < 0 || gx >= width || gy < 0 || gy >= height) LOG_WARN("coord conversion out of bounds");
+    if (gx < 0 || gx >= width || gy < 0 || gy >= height) 
+    {
+        LOG_WARN("coord conversion out of bounds");
+        gx = std::clamp(gx, 0, width);
+        gy = std::clamp(gx, 0, height);
+    }
     return { gx, gy };
 }
 void SpawnRoom(TilesetChunk& chunk, RoomTrigger& trigger)
