@@ -27,7 +27,7 @@ sl::EntityId CreatePlayer(sl::Vec2f pos, float width, float height, sl::Texture*
 	return player;
 }
 
-sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, sl::Texture* texture)
+sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, float health, float damage, sl::Texture* texture)
 {
 	sl::EntityComponentSystem& ecs = se::Engine::GetECS();
 	sl::Scene* scene = ecs.GetCurrentScene();
@@ -36,13 +36,14 @@ sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, sl::Texture* 
 	scene->AddComponent<TagComponent>(enemy, TagComponent{ 0 | uint32_t(Tags::enemy) });
 	scene->AddComponent<PathfindingComponent>(enemy, PathfindingComponent{});
 	scene->AddComponent<EnemyBehaviorComponent>(enemy, EnemyBehaviorComponent{ BehaviorStage::Approach, 200.0f, 1.0f, 0.0f, 5, 5, {} });
-	scene->AddComponent<HealthComponent>(enemy, HealthComponent{ 100.0f, 100.0f });
+	scene->AddComponent<HealthComponent>(enemy, HealthComponent{ health, health });
 	scene->AddComponent<TransformComponent>(enemy, TransformComponent{ pos, 0.0f });
 	scene->AddComponent<MovementComponent>(enemy, MovementComponent{});
 	scene->AddComponent<ColliderComponent>(enemy, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
 	scene->AddComponent<SpriteComponent>(enemy, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(width / 2, height / 2), texture,
 		sl::RectF(0.0f, width, 0.0f, height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::Orange, sl::Vec2f(width, height), nullptr));
 	scene->AddComponent<WeaponComponent>(enemy, WeaponComponent{});
+	scene->GetComponent<WeaponComponent>(enemy).damage = damage;
 	return enemy;
 }
 

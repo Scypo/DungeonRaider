@@ -4,5 +4,5 @@
 #include"Level.h"
 
 sl::EntityId CreatePlayer(sl::Vec2f pos, float width, float height, sl::Texture* texture);
-sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, sl::Texture* texture);
+sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, float health, float damage, sl::Texture* texture);
 void DrawHealthBars();

@@ -6,6 +6,8 @@
 #include"Components.h"
 #include"GameObjects.h"
 
+static DifficultyManager difManager;
+
 TilesetChunk::TilesetChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture)
 	:
 	width(width), height(height), tileSize(tileSize), atlas(texture), worldRect(pos, width * tileSize, height * tileSize)
@@ -519,6 +521,7 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                     chunk.uvIndex[index] = TileSprite::openGate;
                 }
                 trigger.state = RoomTrigger::State::Explored;
+                difManager.UpdateDifficultyScale();
             }
         }
     }
@@ -674,7 +677,14 @@ void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, 
         if (valid)
         {
             usedPos.push_back(spawnPos);
-            CreateEnemy(spawnPos, 40.0f, 40.0f, nullptr);
+            float health = 100.0f * difManager.GetDifficultyScale();
+            float damage = 20.0f * difManager.GetDifficultyScale();
+            CreateEnemy(spawnPos, 40.0f, 40.0f, health, damage, nullptr);
         }
     }
+}
+
+void DifficultyManager::UpdateDifficultyScale()
+{
+    scale *= 1.0f + rate;
 }

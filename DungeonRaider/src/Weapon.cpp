@@ -8,16 +8,14 @@ bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune)
     sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
     if (weapon.remainingTime > 0) return false;
-    ProjectileData& data = weapon.projectileData;
     weapon.remainingTime = weapon.cooldown;
     sl::RectF entityRect = GetWorldCollider(id);
     sl::Vec2f weaponOrigin = sl::Vec2f(entityRect.GetCenter());
 
-
     sl::Vec2f dir = (target - weaponOrigin).GetNormalized();
-    sl::Vec2f bulletSpawn = weaponOrigin - sl::Vec2f(data.width / 2, data.height / 2);
+    sl::Vec2f bulletSpawn = weaponOrigin - sl::Vec2f(weapon.projWidth / 2, weapon.projHeight / 2);
 
-    CreateProjectile(bulletSpawn, dir, &data, immune);
+    CreateProjectile(bulletSpawn, dir, id, immune);
     return true;
 }
 
@@ -90,20 +88,22 @@ void WeaponSystem::Run(float dt, sl::Scene& scene)
         });
 }
 
-sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, const ProjectileData* data, TagComponent immune)
+sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune)
 {
     sl::EntityComponentSystem& ecs = se::Engine::GetECS();
     sl::Scene* scene = ecs.GetCurrentScene();
+    assert(scene->HasComponent<WeaponComponent>(weapon));
+    WeaponComponent& wpn = scene->GetComponent<WeaponComponent>(weapon);
 
     sl::EntityId projectile;
     projectile = scene->CreateEntity();
-    scene->AddComponent<Projectile>(projectile, Projectile{ data->damage });
+    scene->AddComponent<Projectile>(projectile, Projectile{ wpn.damage });
     scene->AddComponent<TagComponent>(projectile, std::move(immune));
     scene->AddComponent<TransformComponent>(projectile, TransformComponent{ pos, 0.0f });
-    scene->AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, data->speed });
-    scene->AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, data->width, 0, data->height), ColliderComponent::CollisionLayer::GameObjects });
-    scene->AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(data->width / 2, data->height / 2), data->texture,
-        sl::RectF(0.0f, data->width, 0.0f, data->height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(data->width, data->height), nullptr));
+    scene->AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, wpn.projSpeed });
+    scene->AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, wpn.projWidth, 0, wpn.projHeight), ColliderComponent::CollisionLayer::GameObjects });
+    scene->AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(wpn.projWidth / 2, wpn.projHeight / 2), wpn.projTexture,
+        sl::RectF(0.0f, wpn.projWidth, 0.0f, wpn.projHeight), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(wpn.projWidth, wpn.projHeight), nullptr));
 
     return projectile;
 }

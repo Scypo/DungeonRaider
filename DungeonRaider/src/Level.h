@@ -86,3 +86,13 @@ class TileCollisionSystem : public sl::System
 {
 	void Run(float dt, sl::Scene& scene) override;
 };
+
+class DifficultyManager
+{
+public:
+	float GetDifficultyScale() { return scale; };
+	void UpdateDifficultyScale();
+private:
+	float scale = 1.0f;
+	float rate = 0.05f;
+};

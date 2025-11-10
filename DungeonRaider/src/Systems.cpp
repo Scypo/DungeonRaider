@@ -76,14 +76,14 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	DrawSprites();
 	gfx.SetDrawLayer(3.0f);
 	DrawHealthBars();
-	//gfx.SetDrawLayer(4.0f);
-	//se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
-	//	{
-	//		for (auto& pos : pathComp.path)
-	//		{
-	//			gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
-	//		}
-	//	});
+	gfx.SetDrawLayer(4.0f);
+	se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
+		{
+			for (auto& pos : pathComp.path)
+			{
+				gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
+			}
+		});
 	gfx.EndView();
 }
 

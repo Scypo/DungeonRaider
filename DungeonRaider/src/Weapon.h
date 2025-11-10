@@ -2,26 +2,23 @@
 #include"ScypEngine/Engine.h"
 #include"Components.h"
 
-struct ProjectileData
-{
-    sl::Texture* texture = nullptr;
-    float height = 10;
-    float width = 10;
-    float speed = 250.0f;
-    float damage = 30.0f;
-};
-
 struct WeaponComponent
 {
+    //weapon data
     sl::Texture* texture = nullptr;
     sl::Sound* shotSound = nullptr;
     int height = 16;
     int width = 32;
     sl::Vec2i origin = { 10,8 };
-    float damage = 10.0f;
+    float damage = 30.0f;
     float cooldown = 0.4f;
     float remainingTime = 0.0f;
-    ProjectileData projectileData {};
+    //projectile data
+    sl::Texture* projTexture = nullptr;
+    sl::Sound* projCollisionSound = nullptr;
+    float projHeight = 10;
+    float projWidth = 10;
+    float projSpeed = 250.0f;
 };
 
 struct Projectile
@@ -29,7 +26,7 @@ struct Projectile
     float damage = 0;
 };
 
-sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, const ProjectileData* data, TagComponent immune);
+sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune);
 bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune = {});
 
 class ProjectileCollisionSystem : public sl::System
