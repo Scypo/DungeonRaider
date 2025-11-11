@@ -5,6 +5,7 @@
 #include"Events.h"
 #include"Pathfinder.h"
 #include"Behavior.h"
+#include"FloatingText.h"
 
 void DungeonRaider::OnBegin()
 {
@@ -32,6 +33,7 @@ void DungeonRaider::OnBegin()
     scene.RegisterSystem<MovementSystem>();
     scene.RegisterSystem<TileCollisionSystem>();
     scene.RegisterSystem<ProjectileCollisionSystem>();
+    scene.RegisterSystem<FloatingTextSystem>();
     scene.RegisterSystem<LevelSystem>();
     scene.RegisterSystem<CameraSystem>();
     scene.RegisterSystem<ExecuteEventSystem>();
@@ -44,6 +46,9 @@ void DungeonRaider::OnBegin()
             health -= e.damage;
             if (health <= 0.0f)
             {
+                #ifndef NDEBUG
+                if(e.target == GameGlobals::player) return;
+                #endif
                 scene.DestroyEntity(e.target);
             }
         });

@@ -168,6 +168,7 @@
     <ClInclude Include="src\Behavior.h" />
     <ClInclude Include="src\Components.h" />
     <ClInclude Include="src\Events.h" />
+    <ClInclude Include="src\FloatingText.h" />
     <ClInclude Include="src\game.h" />
     <ClInclude Include="src\GameObjects.h" />
     <ClInclude Include="src\Level.h" />

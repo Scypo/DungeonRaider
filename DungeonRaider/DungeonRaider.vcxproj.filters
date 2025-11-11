@@ -68,5 +68,8 @@
     <ClInclude Include="src\Behavior.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\FloatingText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

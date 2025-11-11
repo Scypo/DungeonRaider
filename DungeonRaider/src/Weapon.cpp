@@ -2,6 +2,7 @@
 #include"Level.h"
 #include"Components.h"
 #include"Events.h"
+#include"FloatingText.h"
 
 bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
@@ -27,7 +28,6 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
 
             scene.ForEach<TilesetChunk>([&](sl::EntityId tilesetId, TilesetChunk& chunk)
                 {
-
                     if (!chunk.worldRect.IsOverlappingWith(sl::RectI(projectileWorldRect))) return;
 
                     auto blocks([&](int x, int y) -> bool
@@ -72,7 +72,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                     sl::RectF targetWorldRect = GetWorldCollider(target);
                     if (targetWorldRect.IsOverlappingWith(projectileWorldRect))
                     {
-                        if (target == GameGlobals::player) return;//TEMPORARY SO PLAYER DOESNT DIE
+                        CreateFloatingText("", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
                         scene.GetEventBus().Emit<DealDamageEvent>(DealDamageEvent{ target, projectile.damage });
                         scene.DestroyEntity(id);
                     }

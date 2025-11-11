@@ -5,12 +5,14 @@
 #include"GameObjects.h"
 #include"Weapon.h"
 #include"Pathfinder.h"
+#include"FloatingText.h"
 
 void MovementSystem::Run(float dt, sl::Scene& scene)
 {	
 	scene.ForEach<TransformComponent, MovementComponent>([&](sl::EntityId id, TransformComponent& transform, MovementComponent& movement)
 		{
             movement.proposedPos = transform.pos + movement.dir * movement.speed * dt;
+			if (!scene.HasComponent<ColliderComponent>(id)) transform.pos = movement.proposedPos;
 		});
 }
 
@@ -77,13 +79,14 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.SetDrawLayer(3.0f);
 	DrawHealthBars();
 	gfx.SetDrawLayer(4.0f);
-	se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
-		{
-			for (auto& pos : pathComp.path)
-			{
-				gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
-			}
-		});
+	DrawFloatingText();
+	//se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
+	//	{
+	//		for (auto& pos : pathComp.path)
+	//		{
+	//			gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
+	//		}
+	//	});
 	gfx.EndView();
 }
 

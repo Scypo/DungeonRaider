@@ -116,8 +116,8 @@ bool Pathfinder::IsValid(sl::Vec2i worldPos, TilesetChunk& chunk, sl::Vec2i size
     int halfW = size.x / 2;
     int halfH = size.y / 2;
 
-    sl::Vec2i topLeft = chunk.WorldToGrid(worldPos.x - halfW, worldPos.y - halfH);
-    sl::Vec2i bottomRight = chunk.WorldToGrid(worldPos.x + halfW, worldPos.y + halfH);
+    sl::Vec2i topLeft = chunk.WorldToGrid(float(worldPos.x - halfW), float(worldPos.y - halfH));
+    sl::Vec2i bottomRight = chunk.WorldToGrid(float(worldPos.x + halfW), float(worldPos.y + halfH));
 
     for (int y = topLeft.y; y <= bottomRight.y; y++)
     {
@@ -239,8 +239,8 @@ bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
     int err = dx + dy;
 
     sl::Vec2f pos = start;
-    int halfW = size.x / 2;
-    int halfH = size.y / 2;
+    int halfW = int(size.x) / 2;
+    int halfH = int(size.y) / 2;
 
     while ((pos - goal).GetLength() > eps)
     {
