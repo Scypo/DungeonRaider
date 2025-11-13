@@ -7,11 +7,9 @@
 #include"Pathfinder.h"
 #include"Behavior.h"
 
-sl::EntityId CreatePlayer(sl::Vec2f pos, float width, float height, sl::Texture* texture)
+sl::EntityId CreatePlayer(sl::Scene* scene, sl::Vec2f pos, float width, float height, sl::Texture* texture)
 {
-	sl::EntityComponentSystem& ecs = se::Engine::GetECS();
-	sl::Scene* scene = ecs.GetCurrentScene();
-
+	assert(scene);
 	sl::EntityId player = scene->CreateEntity();
 	scene->AddComponent<TagComponent>(player, TagComponent{ 0 | uint32_t(Tags::player) });
 	scene->AddComponent<HealthComponent>(player, HealthComponent{ 100.0f, 100.0f });
@@ -27,11 +25,9 @@ sl::EntityId CreatePlayer(sl::Vec2f pos, float width, float height, sl::Texture*
 	return player;
 }
 
-sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, float health, float damage, sl::Texture* texture)
+sl::EntityId CreateEnemy(sl::Scene* scene, sl::Vec2f pos, float width, float height, float health, float damage, sl::Texture* texture)
 {
-	sl::EntityComponentSystem& ecs = se::Engine::GetECS();
-	sl::Scene* scene = ecs.GetCurrentScene();
-
+	assert(scene);
 	sl::EntityId enemy = scene->CreateEntity();
 	scene->AddComponent<TagComponent>(enemy, TagComponent{ 0 | uint32_t(Tags::enemy) });
 	scene->AddComponent<PathfindingComponent>(enemy, PathfindingComponent{});
@@ -47,15 +43,15 @@ sl::EntityId CreateEnemy(sl::Vec2f pos, float width, float height, float health,
 	return enemy;
 }
 
-void DrawHealthBars()
+void DrawHealthBars(sl::Scene* scene)
 {
+	assert(scene);
 	float height = 5.0f;
-	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
 	sl::Graphics& gfx = se::Engine::GetGraphics();
-	scene.ForEach<HealthComponent>([&](sl::EntityId id, HealthComponent& health)
+	scene->ForEach<HealthComponent>([&](sl::EntityId id, HealthComponent& health)
 		{
-			if (id == GameGlobals::player) return;
-			sl::RectF worldRect = GetWorldCollider(id);
+			if (id == GameGlobals::player || health.maxHealth - health.health < 0.1f) return;
+			sl::RectF worldRect = GetWorldCollider(scene, id);
 
 			float filled = health.health / health.maxHealth * worldRect.GetWidth();
 

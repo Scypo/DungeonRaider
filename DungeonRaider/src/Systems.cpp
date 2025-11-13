@@ -21,6 +21,12 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 	auto& kbd = se::Engine::GetKeyboard();
 	auto& mouse = se::Engine::GetMouse();
 
+	if (kbd.KeyIsPressed(GLFW_KEY_ESCAPE))
+	{
+		se::Engine::GetECS().SwitchScenes("BuyScreen");
+		kbd.Flush();
+	}
+
 	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameGlobals::player);
 	movement.dir = { 0.0f,0.0f };
 	if (kbd.KeyIsPressed('W')) movement.dir.y -= 1.0f;
@@ -39,7 +45,7 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 		};
 		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
 
-		WeaponAttack(GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
+		WeaponAttack(&scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
 	}
 	weapon.remainingTime -= dt;
 }
@@ -73,14 +79,14 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 	gfx.BeginView(cam.pos, cam.zoom);
 	gfx.SetDrawLayer(0.0f);
-	DrawLevel();
+	DrawLevel(&scene);
 	gfx.SetDrawLayer(2.0f);
-	DrawSprites();
+	DrawSprites(&scene);
 	gfx.SetDrawLayer(3.0f);
-	DrawHealthBars();
+	DrawHealthBars(&scene);
 	gfx.SetDrawLayer(4.0f);
-	DrawFloatingText();
-	//se::Engine::GetECS().GetCurrentScene()->ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
+	DrawFloatingText(&scene);
+	//scene.ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
 	//	{
 	//		for (auto& pos : pathComp.path)
 	//		{
@@ -90,11 +96,10 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.EndView();
 }
 
-void DrawSprites()
+void DrawSprites(sl::Scene* scene)
 {
-	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
 	sl::Graphics& gfx = se::Engine::GetGraphics();
-	scene.ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
+	scene->ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
 		{
 			if (sprite.texture)
 			{

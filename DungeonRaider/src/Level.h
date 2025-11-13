@@ -70,12 +70,12 @@ struct TilesetChunk
 	int tileSize = 0;
 };
 
-sl::EntityId CreateTileChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture);
+sl::EntityId CreateTileChunk(sl::Scene* scene, sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture);
 void SpawnObstacles(TilesetChunk& chunk, RoomTrigger& trigger);
 void SpawnRoom(TilesetChunk& chunk, RoomTrigger& trigger);
-void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most);
-void CreateLevel();
-void DrawLevel();
+void CreateEnemiesInRoom(sl::Scene* scene, const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most);
+void CreateLevel(sl::Scene* scene);
+void DrawLevel(sl::Scene* scene);
 
 class LevelSystem : public sl::System
 {

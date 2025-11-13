@@ -1,22 +1,21 @@
 #include "Weapon.h"
 #include"Level.h"
 #include"Components.h"
-#include"Events.h"
 #include"FloatingText.h"
 
-bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune)
+bool WeaponAttack(sl::Scene* scene, sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
-    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
-    WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
+    assert(scene);
+    WeaponComponent& weapon = scene->GetComponent<WeaponComponent>(id);
     if (weapon.remainingTime > 0) return false;
     weapon.remainingTime = weapon.cooldown;
-    sl::RectF entityRect = GetWorldCollider(id);
+    sl::RectF entityRect = GetWorldCollider(scene, id);
     sl::Vec2f weaponOrigin = sl::Vec2f(entityRect.GetCenter());
 
     sl::Vec2f dir = (target - weaponOrigin).GetNormalized();
     sl::Vec2f bulletSpawn = weaponOrigin - sl::Vec2f(weapon.projWidth / 2, weapon.projHeight / 2);
 
-    CreateProjectile(bulletSpawn, dir, id, immune);
+    CreateProjectile(scene, bulletSpawn, dir, id, immune);
     return true;
 }
 
@@ -24,7 +23,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
 {
     scene.ForEach<Projectile, TransformComponent, ColliderComponent, MovementComponent, TagComponent>([&](sl::EntityId id, Projectile& projectile, TransformComponent& transform, ColliderComponent& collider, MovementComponent& movement, TagComponent& tag)
         {
-            sl::RectF projectileWorldRect = GetWorldCollider(id);
+            sl::RectF projectileWorldRect = GetWorldCollider(&scene, id);
 
             scene.ForEach<TilesetChunk>([&](sl::EntityId tilesetId, TilesetChunk& chunk)
                 {
@@ -69,11 +68,18 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                     {
                         if (scene.GetComponent<TagComponent>(target).tag & tag.tag) return;
                     }
-                    sl::RectF targetWorldRect = GetWorldCollider(target);
+                    sl::RectF targetWorldRect = GetWorldCollider(&scene, target);
                     if (targetWorldRect.IsOverlappingWith(projectileWorldRect))
                     {
-                        CreateFloatingText("", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
-                        scene.GetEventBus().Emit<DealDamageEvent>(DealDamageEvent{ target, projectile.damage });
+                        CreateFloatingText(&scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
+
+                        float& health = scene.GetComponent<HealthComponent>(target).health;
+                        health -= projectile.damage;
+                        if (health <= 0.0f)
+                        {
+                            if (target == GameGlobals::player) return;
+                            scene.DestroyEntity(target);
+                        }
                         scene.DestroyEntity(id);
                     }
                 });
@@ -88,10 +94,9 @@ void WeaponSystem::Run(float dt, sl::Scene& scene)
         });
 }
 
-sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune)
+sl::EntityId CreateProjectile(sl::Scene* scene, sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune)
 {
-    sl::EntityComponentSystem& ecs = se::Engine::GetECS();
-    sl::Scene* scene = ecs.GetCurrentScene();
+    assert(scene);
     assert(scene->HasComponent<WeaponComponent>(weapon));
     WeaponComponent& wpn = scene->GetComponent<WeaponComponent>(weapon);
 

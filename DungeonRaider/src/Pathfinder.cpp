@@ -6,12 +6,11 @@
 
 static Pathfinder pathfinder;
 
-void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
-{
-    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
-    
-    sl::RectF entityWorldRect = GetWorldCollider(id);
-    scene.ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
+void Pathfinder::FindPath(sl::Scene* scene, sl::EntityId id, sl::Vec2f goalWorld)
+{   
+    assert(scene);
+    sl::RectF entityWorldRect = GetWorldCollider(scene, id);
+    scene->ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
         {
             if (!entityWorldRect.IsContainedBy(sl::RectF(chunk.worldRect))) return;
             if (!chunk.worldRect.Contains(sl::Vec2i(goalWorld))) return;
@@ -44,7 +43,7 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
                 return;
             }
 
-            se::Engine::GetECS().GetCurrentScene()->GetComponent<PathfindingComponent>(id).path.clear();
+            scene->GetComponent<PathfindingComponent>(id).path.clear();
             
             Cell startCell(start, start, 0, GetH(start, goal));
 
@@ -58,7 +57,7 @@ void Pathfinder::FindPath(sl::EntityId id, sl::Vec2f goalWorld)
 
                 if ((currentCell.pos - goal).GetLength() < eps)
                 {
-                    SetPath(start, currentCell.pos, chunk, id);
+                    SetPath(scene, start, currentCell.pos, chunk, id);
                     return;
                 }
 
@@ -130,8 +129,9 @@ bool Pathfinder::IsValid(sl::Vec2i worldPos, TilesetChunk& chunk, sl::Vec2i size
     return true;
 }
 
-void Pathfinder::SetPath(sl::Vec2i startPos, sl::Vec2i goalPos, TilesetChunk& chunk, sl::EntityId id)
+void Pathfinder::SetPath(sl::Scene* scene, sl::Vec2i startPos, sl::Vec2i goalPos, TilesetChunk& chunk, sl::EntityId id)
 {
+    assert(scene);
     std::vector<sl::Vec2f> path;
     
     sl::Vec2i currentPos = goalPos;
@@ -142,14 +142,15 @@ void Pathfinder::SetPath(sl::Vec2i startPos, sl::Vec2i goalPos, TilesetChunk& ch
         currentPos = parentMap.at(currentPos);
     }
     assert(!path.empty());
-    SmoothPath(path, chunk, id);
+    SmoothPath(scene, path, chunk, id);
 }
 
-void Pathfinder::SmoothPath(std::vector<sl::Vec2f>& rawPath, TilesetChunk& chunk, sl::EntityId id)
+void Pathfinder::SmoothPath(sl::Scene* scene, std::vector<sl::Vec2f>& rawPath, TilesetChunk& chunk, sl::EntityId id)
 {
+    assert(scene);
     if (rawPath.size() < 2) return;
-    std::vector<sl::Vec2f>& path = se::Engine::GetECS().GetCurrentScene()->GetComponent<PathfindingComponent>(id).path;
-    ColliderComponent& collider = se::Engine::GetECS().GetCurrentScene()->GetComponent<ColliderComponent>(id);
+    std::vector<sl::Vec2f>& path = scene->GetComponent<PathfindingComponent>(id).path;
+    ColliderComponent& collider = scene->GetComponent<ColliderComponent>(id);
     sl::Vec2f size = sl::Vec2f(collider.bounds.GetWidth(), collider.bounds.GetHeight());
     path.clear();
 
@@ -158,7 +159,7 @@ void Pathfinder::SmoothPath(std::vector<sl::Vec2f>& rawPath, TilesetChunk& chunk
 
     while (next < rawPath.size())
     {
-        while (next + 1 < rawPath.size() && IsPathClear(rawPath[current], rawPath[next], size))
+        while (next + 1 < rawPath.size() && IsPathClear(scene, rawPath[current], rawPath[next], size))
         {
             break;
             next++;
@@ -177,11 +178,11 @@ void PathfindingSystem::Run(float dt, sl::Scene& scene)
         {
             if (pathComp.suspended) return;
             pathComp.timeSincePathfining += dt;
-            sl::RectF worldCollider = GetWorldCollider(id);
+            sl::RectF worldCollider = GetWorldCollider(&scene, id);
             if (pathComp.pathLifetime <= pathComp.timeSincePathfining || pathComp.path.empty())
             {
                 pathComp.timeSincePathfining = 0.0f;
-                pathfinder.FindPath(id, pathComp.target);
+                pathfinder.FindPath(&scene, id, pathComp.target);
             }
             else if ((worldCollider.GetCenter() - pathComp.path.back()).GetLength() < treshold)
             {
@@ -190,7 +191,7 @@ void PathfindingSystem::Run(float dt, sl::Scene& scene)
             if (!pathComp.path.empty())
             {
                 sl::Vec2f targetPos = pathComp.path.back();
-                movement.dir = sl::Vec2f(targetPos - GetWorldCollider(id).GetCenter()).GetNormalized();
+                movement.dir = sl::Vec2f(targetPos - GetWorldCollider(&scene, id).GetCenter()).GetNormalized();
             }
             else
             {
@@ -214,13 +215,13 @@ PathfindingComponent& PathfindingComponent::operator=(const PathfindingComponent
     return *this;
 }
 
-bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
+bool IsPathClear(sl::Scene* scene, sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
 {
+    assert(scene);
     int eps = 10;
-    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
     TilesetChunk* curChunk = nullptr;
 
-    scene.ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
+    scene->ForEach<TilesetChunk>([&](sl::EntityId chunkId, TilesetChunk& chunk)
         {
             if (curChunk) return;
             if (chunk.worldRect.Contains(sl::Vec2i(start)) && chunk.worldRect.Contains(sl::Vec2i(goal)))
@@ -272,12 +273,12 @@ bool IsPathClear(sl::Vec2f start, sl::Vec2f goal, sl::Vec2f size)
     return true;
 }
 
-bool IsPathClear(sl::EntityId id, sl::Vec2f goalWorld)
+bool IsPathClear(sl::Scene* scene, sl::EntityId id, sl::Vec2f goalWorld)
 {
-    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
+    assert(scene);
     TilesetChunk* curChunk = nullptr;
-    sl::RectF worldCollider = GetWorldCollider(id);
+    sl::RectF worldCollider = GetWorldCollider(scene, id);
     sl::Vec2f size = sl::Vec2f(worldCollider.GetWidth(), worldCollider.GetHeight());
     
-    return IsPathClear(worldCollider.GetCenter(), goalWorld, size);
+    return IsPathClear(scene, worldCollider.GetCenter(), goalWorld, size);
 }

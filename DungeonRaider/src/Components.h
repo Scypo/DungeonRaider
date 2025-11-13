@@ -8,6 +8,7 @@ struct GameGlobals
 	inline static sl::EntityId camera = -1;
 	inline static sl::EntityId currentRoom = -1;
 	inline static float elapsedTime = 0.0f;
+	inline static int spendingPoints = 0;
 };
 
 struct TransformComponent
@@ -86,23 +87,26 @@ struct Camera
 	bool active = true;
 };
 
-inline sl::EntityId CreateCamera()
+struct CallbackComponent
 {
-	sl::EntityComponentSystem& ecs = se::Engine::GetECS();
-	sl::Scene* scene = ecs.GetCurrentScene();
+	std::function<void()> callback;
+};
 
+inline sl::EntityId CreateCamera(sl::Scene* scene)
+{
+	assert(scene);
 	sl::EntityId camera = scene->CreateEntity();
 	scene->AddComponent<Camera>(camera, Camera{});
 	GameGlobals::camera = camera;
 	return camera;
 }
 
-inline sl::RectF GetWorldCollider(sl::EntityId id)
+inline sl::RectF GetWorldCollider(sl::Scene* scene, sl::EntityId id)
 {
-	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
-	assert(scene.HasComponent<TransformComponent>(id) && scene.HasComponent<ColliderComponent>(id));
-	TransformComponent& transform = scene.GetComponent<TransformComponent>(id);
-	ColliderComponent& collider = scene.GetComponent<ColliderComponent>(id);
+	assert(scene);
+	assert(scene->HasComponent<TransformComponent>(id) && scene->HasComponent<ColliderComponent>(id));
+	TransformComponent& transform = scene->GetComponent<TransformComponent>(id);
+	ColliderComponent& collider = scene->GetComponent<ColliderComponent>(id);
 	sl::RectF entityWorldRect;
 	entityWorldRect.left = transform.pos.x + collider.bounds.left;
 	entityWorldRect.top = transform.pos.y + collider.bounds.top;

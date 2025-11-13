@@ -70,7 +70,8 @@ namespace se
 
                 graphics->BeginFrame();
                 assert(ecs->GetCurrentScene());
-                ecs->GetCurrentScene()->RunSystems(dt);
+                assert(!ecs->Empty());
+                ecs->Run(dt);
                 game->OnUpdate(dt);
                 graphics->EndFrame();
             }

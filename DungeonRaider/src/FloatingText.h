@@ -8,21 +8,20 @@ struct FloatingText
 	sl::Color color = sl::Colors::White;
 };
 
-inline void CreateFloatingText(const std::string& text, sl::Vec2f pos, sl::Color color, float fadeRate, float speed = 10.0f, sl::Vec2f dir = { 0.0f,0.0f })
+inline void CreateFloatingText(sl::Scene* scene, const std::string& text, sl::Vec2f pos, sl::Color color, float fadeRate, float speed = 10.0f, sl::Vec2f dir = { 0.0f,0.0f })
 {
-	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
-
-	sl::EntityId floatingText = scene.CreateEntity();
-	scene.AddComponent<FloatingText>(floatingText, FloatingText{ fadeRate, color });
-	scene.AddComponent<TransformComponent>(floatingText, TransformComponent{ pos, 0.0f });
-	scene.AddComponent<MovementComponent>(floatingText, MovementComponent{ dir, pos, speed });
+	assert(scene);
+	sl::EntityId floatingText = scene->CreateEntity();
+	scene->AddComponent<FloatingText>(floatingText, FloatingText{ fadeRate, color });
+	scene->AddComponent<TransformComponent>(floatingText, TransformComponent{ pos, 0.0f });
+	scene->AddComponent<MovementComponent>(floatingText, MovementComponent{ dir, pos, speed });
 }
 
-inline void DrawFloatingText()
+inline void DrawFloatingText(sl::Scene* scene)
 {
+	assert(scene);
 	sl::Graphics& gfx = se::Engine::GetGraphics();
-	sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
-	scene.ForEach<FloatingText, TransformComponent>([&](sl::EntityId id, FloatingText& text, TransformComponent& transform)
+	scene->ForEach<FloatingText, TransformComponent>([&](sl::EntityId id, FloatingText& text, TransformComponent& transform)
 		{
 			gfx.DrawRect(transform.pos, sl::Vec2f(10.0f, 10.0f), text.color);
 		});

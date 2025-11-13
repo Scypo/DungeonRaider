@@ -167,13 +167,13 @@
   <ItemGroup>
     <ClInclude Include="src\Behavior.h" />
     <ClInclude Include="src\Components.h" />
-    <ClInclude Include="src\Events.h" />
     <ClInclude Include="src\FloatingText.h" />
     <ClInclude Include="src\game.h" />
     <ClInclude Include="src\GameObjects.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\Pathfinder.h" />
     <ClInclude Include="src\Systems.h" />
+    <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Weapon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

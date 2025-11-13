@@ -26,8 +26,8 @@ struct Projectile
     float damage = 0;
 };
 
-sl::EntityId CreateProjectile(sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune);
-bool WeaponAttack(sl::EntityId id, sl::Vec2f target, TagComponent immune = {});
+sl::EntityId CreateProjectile(sl::Scene* scene, sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune);
+bool WeaponAttack(sl::Scene* scene, sl::EntityId id, sl::Vec2f target, TagComponent immune = {});
 
 class ProjectileCollisionSystem : public sl::System
 {

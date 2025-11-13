@@ -190,11 +190,9 @@ void SpawnRoom(TilesetChunk& chunk, RoomTrigger& trigger)
     }
 }
 
-void CreateLevel()
+void CreateLevel(sl::Scene* scene)
 {
-    auto& ecs = se::Engine::GetECS();
-    sl::Scene& scene = *ecs.GetCurrentScene();
-
+    assert(scene);
     sl::Texture* atlas = se::Engine::GetGraphics().LoadTexture("assets/images/tile_set8.png");
 
     int width = 30;
@@ -212,24 +210,24 @@ void CreateLevel()
 
     for (int i = 0; i < 5; i++)
     {
-        sl::EntityId chunkId = CreateTileChunk(positions[i], width, height, tileSize, atlas);
+        sl::EntityId chunkId = CreateTileChunk(scene, positions[i], width, height, tileSize, atlas);
 
         if (i == 4)
         {
             GameGlobals::currentRoom = chunkId;
-            scene.GetComponent<RoomTrigger>(chunkId).state = RoomTrigger::State::Explored;
-            scene.GetComponent<RoomEncounter>(chunkId) = RoomEncounter{};
+            scene->GetComponent<RoomTrigger>(chunkId).state = RoomTrigger::State::Explored;
+            scene->GetComponent<RoomEncounter>(chunkId) = RoomEncounter{};
         }
     }
 }
 
-void DrawLevel()
+void DrawLevel(sl::Scene* scene)
 {
-    sl::Scene& scene = *se::Engine::GetECS().GetCurrentScene();
+    assert(scene);
     sl::Graphics& gfx = se::Engine::GetGraphics();
-    Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
+    Camera& cam = scene->GetComponent<Camera>(GameGlobals::camera);
 
-    scene.ForEach<TilesetChunk, TransformComponent>([&](sl::EntityId id, TilesetChunk& chunk, TransformComponent& transform)
+    scene->ForEach<TilesetChunk, TransformComponent>([&](sl::EntityId id, TilesetChunk& chunk, TransformComponent& transform)
         {
             float worldLeft = cam.pos.x;
             float worldRight = cam.pos.x + gfx.GetCanvasWidth() / cam.zoom;
@@ -453,8 +451,8 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                                 
                             }
                         });
-                    CreateTileChunk(sl::Vec2i(transform.pos - delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
-                    CreateTileChunk(sl::Vec2i(transform.pos + delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
+                    CreateTileChunk(&scene, sl::Vec2i(transform.pos - delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
+                    CreateTileChunk(&scene, sl::Vec2i(transform.pos + delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
                 }
                 else if (transform.pos.x == prevTransform.pos.x)
                 {
@@ -472,8 +470,8 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                                 movedTrig.worldBounds.Translate(delta);
                             }
                         });
-                    CreateTileChunk(sl::Vec2i(transform.pos - delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
-                    CreateTileChunk(sl::Vec2i(transform.pos + delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
+                    CreateTileChunk(&scene, sl::Vec2i(transform.pos - delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
+                    CreateTileChunk(&scene, sl::Vec2i(transform.pos + delta), chunk.width, chunk.height, chunk.tileSize, chunk.atlas);
                 }
 
                 GameGlobals::currentRoom = curRoom;
@@ -504,7 +502,7 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
             
             if (encounter.wavesLeft > 0 && encounter.deleyLeft <= 0.0f)
             {
-                CreateEnemiesInRoom(chunk, trigger, encounter.leastEnemies, encounter.mostEnemies);
+                CreateEnemiesInRoom(&scene, chunk, trigger, encounter.leastEnemies, encounter.mostEnemies);
                 encounter.deleyLeft = encounter.deley;
                 encounter.wavesLeft--;
             }
@@ -522,6 +520,7 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                 }
                 trigger.state = RoomTrigger::State::Explored;
                 difManager.UpdateDifficultyScale();
+                GameGlobals::spendingPoints++;
             }
         }
     }
@@ -597,10 +596,9 @@ void TileCollisionSystem::Run(float dt, sl::Scene& scene)
 
 }
 
-sl::EntityId CreateTileChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture)
+sl::EntityId CreateTileChunk(sl::Scene* scene, sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture)
 {
-    sl::EntityComponentSystem& ecs = se::Engine::GetECS();
-    sl::Scene* scene = ecs.GetCurrentScene();
+    assert(scene);
     sl::EntityId chunkId = scene->CreateEntity();
 
     TilesetChunk chunk(pos, width, height, tileSize, texture);
@@ -616,7 +614,7 @@ sl::EntityId CreateTileChunk(sl::Vec2i pos, int width, int height, int tileSize,
     return chunkId;
 }
 
-void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most)
+void CreateEnemiesInRoom(sl::Scene* scene, const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most)
 {
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -679,7 +677,7 @@ void CreateEnemiesInRoom(const TilesetChunk& chunk, const RoomTrigger& trigger, 
             usedPos.push_back(spawnPos);
             float health = 100.0f * difManager.GetDifficultyScale();
             float damage = 20.0f * difManager.GetDifficultyScale();
-            CreateEnemy(spawnPos, 40.0f, 40.0f, health, damage, nullptr);
+            CreateEnemy(scene, spawnPos, 40.0f, 40.0f, health, damage, nullptr);
         }
     }
 }
