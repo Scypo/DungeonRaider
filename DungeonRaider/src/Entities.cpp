@@ -1,7 +1,5 @@
-#include "GameObjects.h"
+#include "Entities.h"
 #include<random>
-
-#include<ScypEngine/Engine.h>
 
 #include"Components.h"
 #include"Pathfinder.h"
@@ -12,6 +10,7 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 	sl::EntityId player = scene.CreateEntity();
 	scene.AddComponent<TagComponent>(player, TagComponent{ 0 | uint32_t(Tags::player) });
 	scene.AddComponent<HealthComponent>(player, HealthComponent{ 100.0f, 100.0f });
+	scene.AddComponent<ShieldComponent>(player, ShieldComponent{ 100.0f, 100.0f, 5.0f, 1.5f,1.5f });
 	scene.AddComponent<TransformComponent>(player, TransformComponent{ sl::Vec2f(450,350), 0.0f });
 	scene.AddComponent<MovementComponent>(player, MovementComponent{});
 	scene.AddComponent<ColliderComponent>(player, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
@@ -20,7 +19,7 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 
 	scene.AddComponent<WeaponComponent>(player, WeaponComponent{});
 	GameGlobals::player = player;
-	
+
 	return player;
 }
 
@@ -30,6 +29,7 @@ sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float hei
 	scene.AddComponent<TagComponent>(enemy, TagComponent{ 0 | uint32_t(Tags::enemy) });
 	scene.AddComponent<PathfindingComponent>(enemy, PathfindingComponent{});
 	scene.AddComponent<EnemyBehaviorComponent>(enemy, EnemyBehaviorComponent{ BehaviorStage::Approach, 200.0f, 1.0f, 0.0f, 5, 5, {} });
+	scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 100.0f, 100.0f, 5.0f, 1.5f,1.5f });
 	scene.AddComponent<HealthComponent>(enemy, HealthComponent{ health, health });
 	scene.AddComponent<TransformComponent>(enemy, TransformComponent{ pos, 0.0f });
 	scene.AddComponent<MovementComponent>(enemy, MovementComponent{});
@@ -47,10 +47,22 @@ void DrawHealthBars(sl::Scene& scene)
 	sl::Graphics& gfx = se::Engine::GetGraphics();
 	scene.ForEach<HealthComponent>([&](sl::EntityId id, HealthComponent& health)
 		{
-			if (id == GameGlobals::player || health.maxHealth - health.health < 0.1f) return;
+			if (id == GameGlobals::player) return;
 			sl::RectF worldRect = GetWorldCollider(scene, id);
 
+			sl::Color c = sl::Colors::Red;
 			float filled = health.health / health.maxHealth * worldRect.GetWidth();
+			if (scene.HasComponent<ShieldComponent>(id))
+			{
+				ShieldComponent& shield = scene.GetComponent<ShieldComponent>(id);
+				if (shield.shield > 0.0f)
+				{
+					filled = shield.shield / shield.maxShield * worldRect.GetWidth();
+					c = sl::Colors::Gray;
+				}
+			}
+
+			if (filled > 0.95f * worldRect.GetWidth()) return;
 
 			sl::RectF filledBar = worldRect;
 			filledBar.bottom = filledBar.top - height;
@@ -60,7 +72,19 @@ void DrawHealthBars(sl::Scene& scene)
 			emptyBar.bottom = emptyBar.top - height;
 			emptyBar.top = emptyBar.bottom - height;
 			emptyBar.left += filled;
-			gfx.DrawRect(filledBar, sl::Colors::Red);
+			gfx.DrawRect(filledBar, c);
 			gfx.DrawRect(emptyBar, sl::Colors::Black);
+		});
+}
+
+void ShieldSystem::Run(float dt, sl::Scene& scene)
+{
+	scene.ForEach<ShieldComponent>([&](sl::EntityId id, ShieldComponent& shield)
+		{
+			shield.cooldownLeft -= dt;
+			if (shield.cooldownLeft <= 0.0f)
+			{
+				shield.shield = std::min(shield.shield + shield.regenRate * dt, shield.maxShield);
+			}
 		});
 }

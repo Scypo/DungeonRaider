@@ -2,9 +2,9 @@
 #include<random>
 
 #include<ScypEngine/Engine.h>
-
+#include<ScypLib/Logger.h>
+#include"Entities.h"
 #include"Components.h"
-#include"GameObjects.h"
 
 static DifficultyManager difManager;
 

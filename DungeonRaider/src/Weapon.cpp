@@ -2,6 +2,7 @@
 #include"Level.h"
 #include"Components.h"
 #include"FloatingText.h"
+#include"Entities.h"
 
 bool WeaponAttack(sl::Scene& scene, sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
@@ -73,11 +74,32 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                         CreateFloatingText(scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
 
                         float& health = scene.GetComponent<HealthComponent>(target).health;
-                        health -= projectile.damage;
-                        if (health <= 0.0f)
+                        if (scene.HasComponent<ShieldComponent>(target))
                         {
-                            if (target == GameGlobals::player) return;
-                            scene.DestroyEntity(target);
+                            ShieldComponent& shield = scene.GetComponent<ShieldComponent>(target);
+                            if (shield.shield <= 0.0f)
+                            {
+                                health -= projectile.damage;
+                                if (health <= 0.0f)
+                                {
+                                    if (target == GameGlobals::player) return;
+                                    scene.DestroyEntity(target);
+                                }
+                            }
+                            else
+                            {
+                                shield.shield = std::max(0.0f, shield.shield - projectile.damage);
+                            }
+                            shield.cooldownLeft = shield.regenCooldown;
+                        }
+                        else
+                        {
+                            health -= projectile.damage;
+                            if (health <= 0.0f)
+                            {
+                                if (target == GameGlobals::player) return;
+                                scene.DestroyEntity(target);
+                            }
                         }
                         scene.DestroyEntity(id);
                     }

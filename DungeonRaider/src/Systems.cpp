@@ -2,10 +2,10 @@
 
 #include "Systems.h"
 #include"Components.h"
-#include"GameObjects.h"
 #include"Weapon.h"
 #include"Pathfinder.h"
 #include"FloatingText.h"
+#include"Entities.h"
 
 void MovementSystem::Run(float dt, sl::Scene& scene)
 {	

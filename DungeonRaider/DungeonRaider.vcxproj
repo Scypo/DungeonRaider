@@ -110,12 +110,13 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)thirdParty\ScypLib\lib\Win32\Release;$(ProjectDir)thirdParty\GLEW\lib\Release\Win32;$(ProjectDir)thirdParty\GLFW\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ScypLib.lib;glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -146,18 +147,19 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)thirdParty\ScypLib\lib\x64\Release;$(ProjectDir)thirdParty\GLEW\lib\Release\x64;$(ProjectDir)thirdParty\GLFW\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ScypLib.lib;glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Behavior.cpp" />
+    <ClCompile Include="src\Entities.cpp" />
     <ClCompile Include="src\game.cpp" />
-    <ClCompile Include="src\GameObjects.cpp" />
     <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Pathfinder.cpp" />
@@ -165,11 +167,11 @@
     <ClCompile Include="src\Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Entities.h" />
     <ClInclude Include="src\Behavior.h" />
     <ClInclude Include="src\Components.h" />
     <ClInclude Include="src\FloatingText.h" />
     <ClInclude Include="src\game.h" />
-    <ClInclude Include="src\GameObjects.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\Pathfinder.h" />
     <ClInclude Include="src\Systems.h" />

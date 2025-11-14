@@ -63,12 +63,6 @@ struct SpriteComponent
 	sl::Shader* shader = nullptr;
 };
 
-struct HealthComponent
-{
-	float health = 0.0f;
-	float maxHealth = 0.0f;
-};
-
 enum class Tags
 {
 	player = 1 << 0,

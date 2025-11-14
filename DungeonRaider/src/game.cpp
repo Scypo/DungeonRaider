@@ -1,6 +1,7 @@
 #include "game.h"
+#include<ScypLib/Logger.h>
 #include"Level.h"
-#include"GameObjects.h"
+#include"Entities.h"
 #include"Systems.h"
 #include"Pathfinder.h"
 #include"Behavior.h"
@@ -22,6 +23,7 @@ void CreateSimulation()
     CreateCamera(scene);
 
     scene.RegisterSystem<InputReadSystem>();
+    scene.RegisterSystem<ShieldSystem>();
     scene.RegisterSystem<WeaponSystem>();
     scene.RegisterSystem<EnemyBehaviorSystem>();
     scene.RegisterSystem<PathfindingSystem>();
@@ -55,8 +57,9 @@ void CreateBuyScreen()
             if (GameGlobals::spendingPoints > 0)
             {
                 GameGlobals::spendingPoints--;
-                HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
-                health.maxHealth = 1.05f * health.maxHealth;
+                ShieldComponent& shield = ecs.GetScene("Level")->GetComponent<ShieldComponent>(GameGlobals::player);
+                shield.maxShield *= 1.05f;
+                shield.regenRate *= 0.8f;
             }
         });
 
@@ -66,9 +69,7 @@ void CreateBuyScreen()
             {
                 GameGlobals::spendingPoints--;
                 HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
-                std::cout << health.maxHealth << std::endl;
-                health.maxHealth = 1.05f * health.maxHealth;
-                std::cout << health.maxHealth << std::endl;
+                health.maxHealth = 1.1f * health.maxHealth;
             }
         });
 
@@ -76,9 +77,9 @@ void CreateBuyScreen()
         {
             if (GameGlobals::spendingPoints > 0)
             {
-                GameGlobals::spendingPoints--;
-                HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
-                health.maxHealth = 1.05f * health.maxHealth;
+                //GameGlobals::spendingPoints--;
+                //HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
+                //health.maxHealth = 1.05f * health.maxHealth;
             }
         
         });
