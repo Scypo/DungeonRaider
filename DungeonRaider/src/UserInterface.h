@@ -2,19 +2,19 @@
 #include<ScypEngine/Engine.h>
 #include"Components.h"
 
-inline sl::EntityId CreateButton(sl::Scene* scene, sl::Vec2f pos, sl::Vec2f size, sl::Texture* texture, sl::RectF& uv, std::function<void()> callback)
+inline sl::EntityId CreateButton(sl::Scene& scene, sl::Vec2f pos, sl::Vec2f size, sl::Texture* texture, sl::RectF& uv, std::function<void()> callback)
 {
-	assert(scene);
-	sl::EntityId button = scene->CreateEntity();
-	scene->AddComponent<TransformComponent>(button, TransformComponent{ pos, 0.0f });
+	sl::EntityId button = scene.CreateEntity();
+	scene.AddComponent<TransformComponent>(button, TransformComponent{ pos, 0.0f });
 	SpriteComponent sprite{};
 	sprite.uv = uv;
 	sprite.texture = texture;
-	scene->AddComponent<SpriteComponent>(button, std::move(sprite));
+	sprite.size = size;
+	scene.AddComponent<SpriteComponent>(button, std::move(sprite));
 	ColliderComponent collider{};
-	collider.bounds = sl::RectF(pos, size.x, size.y);
-	scene->AddComponent<ColliderComponent>(button, std::move(collider));
-	scene->AddComponent<CallbackComponent>(button, CallbackComponent{ callback });
+	collider.bounds = sl::RectF(0, size.x, 0, size.y);
+	scene.AddComponent<ColliderComponent>(button, std::move(collider));
+	scene.AddComponent<CallbackComponent>(button, CallbackComponent{ callback });
 	return button;
 }
 
@@ -29,24 +29,25 @@ class ButtonSystem : public sl::System
 		}
 		sl::Graphics& gfx = se::Engine::GetGraphics();
 		sl::Vec2f mouseScreenPos = se::Engine::GetMouse().GetPos();
-		sl::Vec2f mouseWordlPos = { mouseScreenPos.x / se::Engine::GetWindow().GetWidth() * gfx.GetCanvasWidth(), 
+		sl::Vec2f mouseWorldPos = { mouseScreenPos.x / se::Engine::GetWindow().GetWidth() * gfx.GetCanvasWidth(),
 			mouseScreenPos.y / se::Engine::GetWindow().GetHeight() * gfx.GetCanvasHeight() };
 
 		bool leftPressed = se::Engine::GetMouse().LeftIsPressed();
 		scene.ForEach<CallbackComponent, ColliderComponent, SpriteComponent>([&](sl::EntityId id, CallbackComponent& button, ColliderComponent& collider, SpriteComponent& sprite)
 			{
-				sl::RectF worldRect = GetWorldCollider(&scene, id);
-				if (worldRect.Contains(mouseWordlPos))
+				sl::RectF worldRect = GetWorldCollider(scene, id);
+				if (worldRect.Contains(mouseWorldPos))
 				{
 					sprite.tint.a = 0.7f;
+					if (leftPressed)
+					{
+						button.callback();
+						se::Engine::GetMouse().Flush();
+					}
 				}
 				else
 				{
 					sprite.tint.a = 1.0f;
-				}
-				if (leftPressed)
-				{
-					button.callback;
 				}
 			});
 	}

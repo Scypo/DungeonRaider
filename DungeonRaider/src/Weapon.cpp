@@ -3,10 +3,9 @@
 #include"Components.h"
 #include"FloatingText.h"
 
-bool WeaponAttack(sl::Scene* scene, sl::EntityId id, sl::Vec2f target, TagComponent immune)
+bool WeaponAttack(sl::Scene& scene, sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
-    assert(scene);
-    WeaponComponent& weapon = scene->GetComponent<WeaponComponent>(id);
+    WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
     if (weapon.remainingTime > 0) return false;
     weapon.remainingTime = weapon.cooldown;
     sl::RectF entityRect = GetWorldCollider(scene, id);
@@ -23,7 +22,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
 {
     scene.ForEach<Projectile, TransformComponent, ColliderComponent, MovementComponent, TagComponent>([&](sl::EntityId id, Projectile& projectile, TransformComponent& transform, ColliderComponent& collider, MovementComponent& movement, TagComponent& tag)
         {
-            sl::RectF projectileWorldRect = GetWorldCollider(&scene, id);
+            sl::RectF projectileWorldRect = GetWorldCollider(scene, id);
 
             scene.ForEach<TilesetChunk>([&](sl::EntityId tilesetId, TilesetChunk& chunk)
                 {
@@ -68,10 +67,10 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                     {
                         if (scene.GetComponent<TagComponent>(target).tag & tag.tag) return;
                     }
-                    sl::RectF targetWorldRect = GetWorldCollider(&scene, target);
+                    sl::RectF targetWorldRect = GetWorldCollider(scene, target);
                     if (targetWorldRect.IsOverlappingWith(projectileWorldRect))
                     {
-                        CreateFloatingText(&scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
+                        CreateFloatingText(scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
 
                         float& health = scene.GetComponent<HealthComponent>(target).health;
                         health -= projectile.damage;
@@ -94,20 +93,19 @@ void WeaponSystem::Run(float dt, sl::Scene& scene)
         });
 }
 
-sl::EntityId CreateProjectile(sl::Scene* scene, sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune)
+sl::EntityId CreateProjectile(sl::Scene& scene, sl::Vec2f pos, sl::Vec2f dir, sl::EntityId weapon, TagComponent immune)
 {
-    assert(scene);
-    assert(scene->HasComponent<WeaponComponent>(weapon));
-    WeaponComponent& wpn = scene->GetComponent<WeaponComponent>(weapon);
+    assert(scene.HasComponent<WeaponComponent>(weapon));
+    WeaponComponent& wpn = scene.GetComponent<WeaponComponent>(weapon);
 
     sl::EntityId projectile;
-    projectile = scene->CreateEntity();
-    scene->AddComponent<Projectile>(projectile, Projectile{ wpn.damage });
-    scene->AddComponent<TagComponent>(projectile, std::move(immune));
-    scene->AddComponent<TransformComponent>(projectile, TransformComponent{ pos, 0.0f });
-    scene->AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, wpn.projSpeed });
-    scene->AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, wpn.projWidth, 0, wpn.projHeight), ColliderComponent::CollisionLayer::GameObjects });
-    scene->AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(wpn.projWidth / 2, wpn.projHeight / 2), wpn.projTexture,
+    projectile = scene.CreateEntity();
+    scene.AddComponent<Projectile>(projectile, Projectile{ wpn.damage });
+    scene.AddComponent<TagComponent>(projectile, std::move(immune));
+    scene.AddComponent<TransformComponent>(projectile, TransformComponent{ pos, 0.0f });
+    scene.AddComponent<MovementComponent>(projectile, MovementComponent{ dir, {}, wpn.projSpeed });
+    scene.AddComponent<ColliderComponent>(projectile, ColliderComponent{ sl::RectF(0, wpn.projWidth, 0, wpn.projHeight), ColliderComponent::CollisionLayer::GameObjects });
+    scene.AddComponent<SpriteComponent>(projectile, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(wpn.projWidth / 2, wpn.projHeight / 2), wpn.projTexture,
         sl::RectF(0.0f, wpn.projWidth, 0.0f, wpn.projHeight), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(wpn.projWidth, wpn.projHeight), nullptr));
 
     return projectile;

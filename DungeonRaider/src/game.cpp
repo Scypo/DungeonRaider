@@ -13,9 +13,7 @@ void CreateSimulation()
     sl::Graphics& gfx = se::Engine::GetGraphics();
     ecs.CreateScene("Level");
     ecs.SwitchScenes("Level", false);
-    sl::Scene* scene = ecs.GetScene("Level");
-
-    assert(scene);
+    sl::Scene& scene = *ecs.GetScene("Level");
 
     gfx.LoadTexture("assets/images/tile_set8.png");
 
@@ -23,18 +21,18 @@ void CreateSimulation()
     CreatePlayer(scene, { 0.0f,0.0f }, 40.0f, 40.0f, gfx.LoadTexture("assets/images/lessShittyCharacter.png"));
     CreateCamera(scene);
 
-    scene->RegisterSystem<InputReadSystem>();
-    scene->RegisterSystem<WeaponSystem>();
-    scene->RegisterSystem<EnemyBehaviorSystem>();
-    scene->RegisterSystem<PathfindingSystem>();
-    scene->RegisterSystem<MovementSystem>();
-    scene->RegisterSystem<TileCollisionSystem>();
-    scene->RegisterSystem<ProjectileCollisionSystem>();
-    scene->RegisterSystem<FloatingTextSystem>();
-    scene->RegisterSystem<LevelSystem>();
-    scene->RegisterSystem<CameraSystem>();
-    scene->RegisterSystem<ExecuteEventSystem>();
-    scene->RegisterSystem<RenderSystem>();
+    scene.RegisterSystem<InputReadSystem>();
+    scene.RegisterSystem<WeaponSystem>();
+    scene.RegisterSystem<EnemyBehaviorSystem>();
+    scene.RegisterSystem<PathfindingSystem>();
+    scene.RegisterSystem<MovementSystem>();
+    scene.RegisterSystem<TileCollisionSystem>();
+    scene.RegisterSystem<ProjectileCollisionSystem>();
+    scene.RegisterSystem<FloatingTextSystem>();
+    scene.RegisterSystem<LevelSystem>();
+    scene.RegisterSystem<CameraSystem>();
+    scene.RegisterSystem<ExecuteEventSystem>();
+    scene.RegisterSystem<RenderSystem>();
 }
 
 void CreateBuyScreen()
@@ -43,17 +41,51 @@ void CreateBuyScreen()
     sl::Graphics& gfx = se::Engine::GetGraphics();
     ecs.CreateScene("BuyScreen");
     ecs.SwitchScenes("BuyScreen", false);
-    sl::Scene* scene = ecs.GetScene("BuyScreen");
-    assert(&scene);
+    sl::Scene& scene = *ecs.GetScene("BuyScreen");
 
-    sl::RectF uv(0.0f, 10.0f, 0.0f, 10.0f);
-    CreateButton(scene, sl::Vec2f(0.0f, 0.0f), sl::Vec2f(100.0f, 100.0f), gfx.LoadTexture("assets/images/medkit.png"), uv, []() {
-        std::cout << "nigger" << std::endl;
+    sl::Texture* texture = gfx.LoadTexture("assets/images/powerupButtons.png");
+    sl::RectF uv(0.0f, 10.0f, 10.0f, 0.0f);
+    std::vector<sl::RectF> uvs = {
+        sl::RectF(0.0f, 39, 0.0f, 64.0f),
+        sl::RectF(40.0f, 79, 0.0f, 64.0f),
+        sl::RectF(80.0f, 119, 0.0f, 64.0f) };
+        
+    CreateButton(scene, sl::Vec2f(40.0f, 50.0f), sl::Vec2f(160.0f, 260.0f), texture, uvs[0], [&]() 
+        {
+            if (GameGlobals::spendingPoints > 0)
+            {
+                GameGlobals::spendingPoints--;
+                HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
+                health.maxHealth = 1.05f * health.maxHealth;
+            }
         });
 
-    scene->RegisterSystem<ButtonSystem>();
-    scene->RegisterSystem<ExecuteEventSystem>();
-    scene->RegisterSystem<UIRenderSystem>();
+    CreateButton(scene, sl::Vec2f(240.0f, 50.0f), sl::Vec2f(160.0f, 260.0f), texture, uvs[1], [&]() 
+        {
+            if (GameGlobals::spendingPoints > 0)
+            {
+                GameGlobals::spendingPoints--;
+                HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
+                std::cout << health.maxHealth << std::endl;
+                health.maxHealth = 1.05f * health.maxHealth;
+                std::cout << health.maxHealth << std::endl;
+            }
+        });
+
+    CreateButton(scene, sl::Vec2f(440.0f, 50.0f), sl::Vec2f(160.0f, 260.0f), texture, uvs[2], [&]() 
+        {
+            if (GameGlobals::spendingPoints > 0)
+            {
+                GameGlobals::spendingPoints--;
+                HealthComponent& health = ecs.GetScene("Level")->GetComponent<HealthComponent>(GameGlobals::player);
+                health.maxHealth = 1.05f * health.maxHealth;
+            }
+        
+        });
+
+    scene.RegisterSystem<ButtonSystem>();
+    scene.RegisterSystem<ExecuteEventSystem>();
+    scene.RegisterSystem<UIRenderSystem>();
 }
 
 void DungeonRaider::OnBegin()

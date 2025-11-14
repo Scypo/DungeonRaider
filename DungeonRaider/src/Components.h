@@ -92,21 +92,19 @@ struct CallbackComponent
 	std::function<void()> callback;
 };
 
-inline sl::EntityId CreateCamera(sl::Scene* scene)
+inline sl::EntityId CreateCamera(sl::Scene& scene)
 {
-	assert(scene);
-	sl::EntityId camera = scene->CreateEntity();
-	scene->AddComponent<Camera>(camera, Camera{});
+	sl::EntityId camera = scene.CreateEntity();
+	scene.AddComponent<Camera>(camera, Camera{});
 	GameGlobals::camera = camera;
 	return camera;
 }
 
-inline sl::RectF GetWorldCollider(sl::Scene* scene, sl::EntityId id)
+inline sl::RectF GetWorldCollider(sl::Scene& scene, sl::EntityId id)
 {
-	assert(scene);
-	assert(scene->HasComponent<TransformComponent>(id) && scene->HasComponent<ColliderComponent>(id));
-	TransformComponent& transform = scene->GetComponent<TransformComponent>(id);
-	ColliderComponent& collider = scene->GetComponent<ColliderComponent>(id);
+	assert(scene.HasComponent<TransformComponent>(id) && scene.HasComponent<ColliderComponent>(id));
+	TransformComponent& transform = scene.GetComponent<TransformComponent>(id);
+	ColliderComponent& collider = scene.GetComponent<ColliderComponent>(id);
 	sl::RectF entityWorldRect;
 	entityWorldRect.left = transform.pos.x + collider.bounds.left;
 	entityWorldRect.top = transform.pos.y + collider.bounds.top;

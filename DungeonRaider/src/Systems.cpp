@@ -45,7 +45,7 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 		};
 		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
 
-		WeaponAttack(&scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
+		WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
 	}
 	weapon.remainingTime -= dt;
 }
@@ -79,13 +79,13 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 	gfx.BeginView(cam.pos, cam.zoom);
 	gfx.SetDrawLayer(0.0f);
-	DrawLevel(&scene);
+	DrawLevel(scene);
 	gfx.SetDrawLayer(2.0f);
-	DrawSprites(&scene);
+	DrawSprites(scene);
 	gfx.SetDrawLayer(3.0f);
-	DrawHealthBars(&scene);
+	DrawHealthBars(scene);
 	gfx.SetDrawLayer(4.0f);
-	DrawFloatingText(&scene);
+	DrawFloatingText(scene);
 	//scene.ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
 	//	{
 	//		for (auto& pos : pathComp.path)
@@ -96,10 +96,10 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.EndView();
 }
 
-void DrawSprites(sl::Scene* scene)
+void DrawSprites(sl::Scene& scene)
 {
 	sl::Graphics& gfx = se::Engine::GetGraphics();
-	scene->ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
+	scene.ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
 		{
 			if (sprite.texture)
 			{
