@@ -6,6 +6,7 @@
 #include"Pathfinder.h"
 #include"FloatingText.h"
 #include"Entities.h"
+#include"UserInterface.h"
 
 void MovementSystem::Run(float dt, sl::Scene& scene)
 {	
@@ -23,7 +24,8 @@ void InputReadSystem::Run(float dt, sl::Scene& scene)
 
 	if (kbd.KeyIsPressed(GLFW_KEY_ESCAPE))
 	{
-		se::Engine::GetECS().SwitchScenes("BuyScreen");
+		CreateBuyScreen();
+		se::Engine::GetECS().SwitchScenes("BuyScreen", false);
 		kbd.Flush();
 	}
 
@@ -93,6 +95,10 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	//			gfx.DrawRect(pos, { 10,10 }, sl::Colors::Green);
 	//		}
 	//	});
+	gfx.EndView();
+	gfx.BeginView();
+	gfx.SetDrawLayer(6.0f);
+	DrawHUD(scene);
 	gfx.EndView();
 }
 

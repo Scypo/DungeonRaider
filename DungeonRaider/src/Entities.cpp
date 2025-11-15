@@ -41,6 +41,20 @@ sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float hei
 	return enemy;
 }
 
+void DrawBar(const sl::Vec2f& pos, float width, float height, float fraction, sl::Color filledColor)
+{
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	fraction = std::clamp(fraction, 0.0f, 1.0f);
+
+	sl::RectF filled(pos, width * fraction, height);
+	sl::RectF empty = filled;
+	empty.left = filled.right;
+	empty.right = filled.left + width;
+
+	gfx.DrawRect(filled, filledColor);
+	gfx.DrawRect(empty, sl::Colors::Black);
+}
+
 void DrawHealthBars(sl::Scene& scene)
 {
 	float height = 5.0f;
@@ -49,32 +63,39 @@ void DrawHealthBars(sl::Scene& scene)
 		{
 			if (id == GameGlobals::player) return;
 			sl::RectF worldRect = GetWorldCollider(scene, id);
+			float barWidth = worldRect.GetWidth();
+			sl::Vec2f barPos(worldRect.left, worldRect.top - height);
 
-			sl::Color c = sl::Colors::Red;
-			float filled = health.health / health.maxHealth * worldRect.GetWidth();
+			float fraction = health.health / health.maxHealth;
+			sl::Color barColor = sl::Colors::Red;
+
 			if (scene.HasComponent<ShieldComponent>(id))
 			{
 				ShieldComponent& shield = scene.GetComponent<ShieldComponent>(id);
 				if (shield.shield > 0.0f)
 				{
-					filled = shield.shield / shield.maxShield * worldRect.GetWidth();
-					c = sl::Colors::Gray;
+					fraction = shield.shield / shield.maxShield;
+					barColor = sl::Colors::Gray;
+					if (fraction >= 0.95f) return;
 				}
 			}
 
-			if (filled > 0.95f * worldRect.GetWidth()) return;
-
-			sl::RectF filledBar = worldRect;
-			filledBar.bottom = filledBar.top - height;
-			filledBar.top = filledBar.bottom - height;
-			filledBar.right = filledBar.left + filled;
-			sl::RectF emptyBar = worldRect;
-			emptyBar.bottom = emptyBar.top - height;
-			emptyBar.top = emptyBar.bottom - height;
-			emptyBar.left += filled;
-			gfx.DrawRect(filledBar, c);
-			gfx.DrawRect(emptyBar, sl::Colors::Black);
+			DrawBar(barPos, barWidth, height, fraction, barColor);
 		});
+}
+
+void DrawHUD(sl::Scene& scene)
+{
+	float barWidth = 150.0f;
+	float barHeight = 20.0f;
+	sl::Vec2f shieldPos(50.0f, 50.0f);
+	sl::Vec2f healthPos(50.0f, 80.0f);
+
+	auto& shield = scene.GetComponent<ShieldComponent>(GameGlobals::player);
+	DrawBar(shieldPos, barWidth, barHeight, shield.shield / shield.maxShield, sl::Colors::Gray);
+
+	auto& health = scene.GetComponent<HealthComponent>(GameGlobals::player);
+	DrawBar(healthPos, barWidth, barHeight, health.health / health.maxHealth, sl::Colors::Red);
 }
 
 void ShieldSystem::Run(float dt, sl::Scene& scene)
