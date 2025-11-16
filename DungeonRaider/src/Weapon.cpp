@@ -74,17 +74,13 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                         CreateFloatingText(scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
 
                         float& health = scene.GetComponent<HealthComponent>(target).health;
+                        if (health <= 0.0f) return;
                         if (scene.HasComponent<ShieldComponent>(target))
                         {
                             ShieldComponent& shield = scene.GetComponent<ShieldComponent>(target);
                             if (shield.shield <= 0.0f)
                             {
                                 health -= projectile.damage;
-                                if (health <= 0.0f)
-                                {
-                                    if (target == GameGlobals::player) return;
-                                    scene.DestroyEntity(target);
-                                }
                             }
                             else
                             {
@@ -95,13 +91,25 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                         else
                         {
                             health -= projectile.damage;
-                            if (health <= 0.0f)
+                        }
+                        scene.DestroyEntity(id);
+                        if (health <= 0.0f)
+                        {
+                            if (target == GameGlobals::player)
                             {
-                                if (target == GameGlobals::player) return;
+                                CreateDeathAnimation(scene, target, 3.0f);
+                                scene.GetComponent<SpriteComponent>(target).tint.a = 0.0f;
+                            }
+                            else
+                            {
+                                if (scene.HasComponent<TagComponent>(target))
+                                {
+                                    if (scene.GetComponent<TagComponent>(target).tag & uint32_t(Tags::enemy)) GameGlobals::killedEnemies++;;
+                                }
+                                CreateDeathAnimation(scene, target, 3.0f);
                                 scene.DestroyEntity(target);
                             }
                         }
-                        scene.DestroyEntity(id);
                     }
                 });
         });

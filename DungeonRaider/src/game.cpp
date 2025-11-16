@@ -16,14 +16,16 @@ void CreateSimulation()
     sl::Scene& scene = *ecs.GetScene("Level");
 
     gfx.LoadTexture("assets/images/tile_set8.png");
+    gfx.SetDefaultFont(gfx.LoadFont("assets/fonts/Fortzilla-Regular.ttf", ' ', '~'));
 
     CreateLevel(scene);
     CreatePlayer(scene, { 0.0f,0.0f }, 40.0f, 40.0f, gfx.LoadTexture("assets/images/lessShittyCharacter.png"));
     CreateCamera(scene);
 
-    scene.RegisterSystem<InputReadSystem>();
+    scene.RegisterSystem<PlayerSystem>();
     scene.RegisterSystem<ShieldSystem>();
     scene.RegisterSystem<WeaponSystem>();
+    scene.RegisterSystem<DeathSystem>();
     scene.RegisterSystem<EnemyBehaviorSystem>();
     scene.RegisterSystem<PathfindingSystem>();
     scene.RegisterSystem<MovementSystem>();

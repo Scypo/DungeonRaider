@@ -519,6 +519,7 @@ void LevelSystem::Run(float dt, sl::Scene& scene)
                 trigger.state = RoomTrigger::State::Explored;
                 difManager.UpdateDifficultyScale();
                 GameGlobals::spendingPoints++;
+                GameGlobals::roomsCleared++;
             }
         }
     }

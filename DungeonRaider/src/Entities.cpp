@@ -4,6 +4,7 @@
 #include"Components.h"
 #include"Pathfinder.h"
 #include"Behavior.h"
+#include"UserInterface.h"
 
 sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float height, sl::Texture* texture)
 {
@@ -39,6 +40,17 @@ sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float hei
 	scene.AddComponent<WeaponComponent>(enemy, WeaponComponent{});
 	scene.GetComponent<WeaponComponent>(enemy).damage = damage;
 	return enemy;
+}
+
+sl::EntityId CreateDeathAnimation(sl::Scene& scene, sl::EntityId id, float fadeRate)
+{
+	sl::EntityId animation = scene.CreateEntity();
+	SpriteComponent sprite = scene.GetComponent<SpriteComponent>(id);
+	scene.AddComponent<SpriteComponent>(animation, std::move(sprite));
+	TransformComponent transform = scene.GetComponent<TransformComponent>(id);
+	scene.AddComponent<TransformComponent>(animation, std::move(transform));
+	scene.AddComponent<DeathComponent>(animation, DeathComponent{ fadeRate });
+	return animation;
 }
 
 void DrawBar(const sl::Vec2f& pos, float width, float height, float fraction, sl::Color filledColor)
@@ -98,6 +110,20 @@ void DrawHUD(sl::Scene& scene)
 	DrawBar(healthPos, barWidth, barHeight, health.health / health.maxHealth, sl::Colors::Red);
 }
 
+void DrawDeathScreen(sl::Scene& scene, float dt)
+{
+	static sl::Color c = sl::Color(0.0f, 0.0f, 0.0f, 0.0f);
+	float fadeRate = 0.7f;
+	c.a += fadeRate * dt;
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	gfx.DrawRect(gfx.GetCanvasRect(), c);
+	if (c.a >= 1.2f)
+	{
+		sl::Scene* newScene = &CreateReportScreen();
+		se::Engine::GetECS().SwitchScenes(newScene, true);
+	}
+}
+
 void ShieldSystem::Run(float dt, sl::Scene& scene)
 {
 	scene.ForEach<ShieldComponent>([&](sl::EntityId id, ShieldComponent& shield)
@@ -108,4 +134,50 @@ void ShieldSystem::Run(float dt, sl::Scene& scene)
 				shield.shield = std::min(shield.shield + shield.regenRate * dt, shield.maxShield);
 			}
 		});
+}
+
+void DeathSystem::Run(float dt, sl::Scene& scene)
+{
+	scene.ForEach<SpriteComponent, DeathComponent>([&](sl::EntityId id, SpriteComponent& sprite, DeathComponent& death)
+		{
+			sprite.tint.a -= death.fadeRate * dt;
+			if (sprite.tint.a < 0.1f) scene.DestroyEntity(id);
+		});
+}
+
+void PlayerSystem::Run(float dt, sl::Scene& scene)
+{
+	GameGlobals::timePlayed += dt;
+	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f) return;
+	auto& kbd = se::Engine::GetKeyboard();
+	auto& mouse = se::Engine::GetMouse();
+
+	if (kbd.KeyIsPressed(GLFW_KEY_ESCAPE))
+	{
+		CreateBuyScreen();
+		se::Engine::GetECS().SwitchScenes("BuyScreen", false);
+		kbd.Flush();
+	}
+
+	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameGlobals::player);
+	movement.dir = { 0.0f,0.0f };
+	if (kbd.KeyIsPressed('W')) movement.dir.y -= 1.0f;
+	if (kbd.KeyIsPressed('S')) movement.dir.y += 1.0f;
+	if (kbd.KeyIsPressed('A')) movement.dir.x -= 1.0f;
+	if (kbd.KeyIsPressed('D')) movement.dir.x += 1.0f;
+
+	WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(GameGlobals::player);
+	if (mouse.LeftIsPressed())
+	{
+		Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
+		sl::Vec2f mouseScreen = mouse.GetPos();
+		sl::Vec2f mouseCanvas = sl::Vec2f{
+			mouseScreen.x * (se::Engine::GetGraphics().GetCanvasWidth() / se::Engine::GetWindow().GetWidth()),
+			mouseScreen.y * (se::Engine::GetGraphics().GetCanvasHeight() / se::Engine::GetWindow().GetHeight())
+		};
+		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
+
+		WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
+	}
+	weapon.remainingTime -= dt;
 }

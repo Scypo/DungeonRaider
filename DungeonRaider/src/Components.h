@@ -9,6 +9,9 @@ struct GameGlobals
 	inline static sl::EntityId currentRoom = -1;
 	inline static float elapsedTime = 0.0f;
 	inline static int spendingPoints = 0;
+	inline static int roomsCleared = 0;
+	inline static int killedEnemies = 0;
+	inline static float timePlayed = 0.0f;
 };
 
 struct TransformComponent

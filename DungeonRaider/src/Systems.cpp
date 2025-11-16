@@ -17,41 +17,6 @@ void MovementSystem::Run(float dt, sl::Scene& scene)
 		});
 }
 
-void InputReadSystem::Run(float dt, sl::Scene& scene)
-{
-	auto& kbd = se::Engine::GetKeyboard();
-	auto& mouse = se::Engine::GetMouse();
-
-	if (kbd.KeyIsPressed(GLFW_KEY_ESCAPE))
-	{
-		CreateBuyScreen();
-		se::Engine::GetECS().SwitchScenes("BuyScreen", false);
-		kbd.Flush();
-	}
-
-	MovementComponent& movement = scene.GetComponent<MovementComponent>(GameGlobals::player);
-	movement.dir = { 0.0f,0.0f };
-	if (kbd.KeyIsPressed('W')) movement.dir.y -= 1.0f;
-	if (kbd.KeyIsPressed('S')) movement.dir.y += 1.0f;
-	if (kbd.KeyIsPressed('A')) movement.dir.x -= 1.0f;
-	if (kbd.KeyIsPressed('D')) movement.dir.x += 1.0f;
-
-	WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(GameGlobals::player);
-	if(mouse.LeftIsPressed())
-	{
-		Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
-		sl::Vec2f mouseScreen = mouse.GetPos();
-		sl::Vec2f mouseCanvas = sl::Vec2f{
-			mouseScreen.x * (se::Engine::GetGraphics().GetCanvasWidth() / se::Engine::GetWindow().GetWidth()),
-			mouseScreen.y * (se::Engine::GetGraphics().GetCanvasHeight() / se::Engine::GetWindow().GetHeight())
-		};
-		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
-
-		WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
-	}
-	weapon.remainingTime -= dt;
-}
-
 void CameraSystem::Run(float dt, sl::Scene& scene)
 {
 	scene.ForEach<Camera>([&](sl::EntityId id, Camera& cam)
@@ -99,6 +64,11 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.BeginView();
 	gfx.SetDrawLayer(6.0f);
 	DrawHUD(scene);
+	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
+	{
+		gfx.SetDrawLayer(7.0f);
+		DrawDeathScreen(scene, dt);
+	}
 	gfx.EndView();
 }
 

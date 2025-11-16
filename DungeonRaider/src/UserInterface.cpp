@@ -20,7 +20,15 @@ sl::EntityId CreateButton(sl::Scene& scene, sl::Vec2f pos, sl::Vec2f size, sl::T
 	return button;
 }
 
-void CreateBuyScreen()
+sl::EntityId CreateText(sl::Scene& scene, sl::Vec2f pos, const std::string& text, float height, sl::Color c, sl::Font* font)
+{
+	sl::EntityId txt = scene.CreateEntity();
+	scene.AddComponent<TransformComponent>(txt, TransformComponent{ pos,0.0f });
+	scene.AddComponent<TextComponent>(txt, TextComponent{ text,height,c,font });
+	return txt;
+}
+
+sl::Scene& CreateBuyScreen()
 {
 	auto& ecs = se::Engine::GetECS();
 	sl::Graphics& gfx = se::Engine::GetGraphics();
@@ -81,6 +89,27 @@ void CreateBuyScreen()
 	scene.RegisterSystem<ButtonSystem>();
 	scene.RegisterSystem<ExecuteEventSystem>();
 	scene.RegisterSystem<UIRenderSystem>();
+
+	return scene;
+}
+
+sl::Scene& CreateReportScreen()
+{
+	auto& ecs = se::Engine::GetECS();
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	ecs.CreateScene("ReportScreen");
+	sl::Scene& scene = *ecs.GetScene("ReportScreen");
+	
+	CreateText(scene, sl::Vec2f(50.0f, 10.0f), "You Died!", 50, sl::Colors::White, nullptr);
+	CreateText(scene, sl::Vec2f(50.0f, 70.0f), "Rooms Cleared: " + std::to_string(GameGlobals::roomsCleared), 50, sl::Colors::White, nullptr);
+	CreateText(scene, sl::Vec2f(50.0f, 130.0f), "Enemies Killed: " + std::to_string(GameGlobals::killedEnemies), 50, sl::Colors::White, nullptr);
+	CreateText(scene, sl::Vec2f(50.0f, 190.0f), "Time Played: " + std::to_string(GameGlobals::timePlayed), 50, sl::Colors::White, nullptr);
+
+
+	scene.RegisterSystem<ButtonSystem>();
+	scene.RegisterSystem<ExecuteEventSystem>();
+	scene.RegisterSystem<UIRenderSystem>();
+	return scene;
 }
 
 void ButtonSystem::Run(float dt, sl::Scene& scene)
@@ -132,6 +161,10 @@ void UIRenderSystem::Run(float dt, sl::Scene& scene)
 			{
 				gfx.DrawRect(transform.pos + sprite.offset, sprite.size, sprite.tint);
 			}
+		});
+	scene.ForEach<TransformComponent, TextComponent>([&](sl::EntityId id, TransformComponent& transform, TextComponent& text)
+		{
+			gfx.DrawText(transform.pos.x, transform.pos.y, text.text, text.font, text.height, text.color);
 		});
 
 	gfx.EndView();

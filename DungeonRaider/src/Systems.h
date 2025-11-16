@@ -6,11 +6,6 @@ class MovementSystem : public sl::System
 	void Run(float dt, sl::Scene& scene) override;
 };
 
-class InputReadSystem : public sl::System
-{
-	void Run(float dt, sl::Scene& scene) override;
-};
-
 class CameraSystem : public sl::System
 {
 	void Run(float dt, sl::Scene& scene) override;
