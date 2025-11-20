@@ -64,6 +64,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.BeginView();
 	gfx.SetDrawLayer(6.0f);
 	DrawHUD(scene);
+	
 	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
 	{
 		gfx.SetDrawLayer(7.0f);

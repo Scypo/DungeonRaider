@@ -33,7 +33,8 @@ struct ColliderComponent
 	{
 		Everything,
 		World,
-		GameObjects
+		GameObjects,
+		Nothing
 	};
 	sl::RectF bounds;
 	CollisionLayer layer = CollisionLayer::Everything;

@@ -16,7 +16,7 @@ void CreateSimulation()
     sl::Scene& scene = *ecs.GetScene("Level");
 
     gfx.LoadTexture("assets/images/tile_set8.png");
-    gfx.SetDefaultFont(gfx.LoadFont("assets/fonts/Fortzilla-Regular.ttf", ' ', '~'));
+    gfx.SetDefaultFont(gfx.LoadFont("assets/fonts/Splatfont.ttf", ' ', '~'));
 
     CreateLevel(scene);
     CreatePlayer(scene, { 0.0f,0.0f }, 40.0f, 40.0f, gfx.LoadTexture("assets/images/lessShittyCharacter.png"));

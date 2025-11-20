@@ -64,6 +64,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                 });
             scene.ForEach<ColliderComponent, HealthComponent>([&](sl::EventId target, ColliderComponent& targetCollider, HealthComponent& targetHealth)
                 {
+                    if ( targetCollider.layer == ColliderComponent::CollisionLayer::Nothing) return;
                     if (scene.HasComponent<TagComponent>(target))
                     {
                         if (scene.GetComponent<TagComponent>(target).tag & tag.tag) return;
@@ -71,7 +72,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                     sl::RectF targetWorldRect = GetWorldCollider(scene, target);
                     if (targetWorldRect.IsOverlappingWith(projectileWorldRect))
                     {
-                        CreateFloatingText(scene, "", projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
+                        CreateFloatingText(scene, std::to_string(int(projectile.damage)), 20.0f, nullptr, projectileWorldRect.GetCenter(), sl::Colors::Red, 1.5f, 50.0f, movement.dir);
 
                         float& health = scene.GetComponent<HealthComponent>(target).health;
                         if (health <= 0.0f) return;
@@ -99,6 +100,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                             {
                                 CreateDeathAnimation(scene, target, 3.0f);
                                 scene.GetComponent<SpriteComponent>(target).tint.a = 0.0f;
+                                scene.GetComponent<ColliderComponent>(target).layer = ColliderComponent::CollisionLayer::Nothing;
                             }
                             else
                             {

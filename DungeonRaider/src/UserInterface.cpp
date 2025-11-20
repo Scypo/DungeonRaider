@@ -103,7 +103,7 @@ sl::Scene& CreateReportScreen()
 	CreateText(scene, sl::Vec2f(50.0f, 10.0f), "You Died!", 50, sl::Colors::White, nullptr);
 	CreateText(scene, sl::Vec2f(50.0f, 70.0f), "Rooms Cleared: " + std::to_string(GameGlobals::roomsCleared), 50, sl::Colors::White, nullptr);
 	CreateText(scene, sl::Vec2f(50.0f, 130.0f), "Enemies Killed: " + std::to_string(GameGlobals::killedEnemies), 50, sl::Colors::White, nullptr);
-	CreateText(scene, sl::Vec2f(50.0f, 190.0f), "Time Played: " + std::to_string(GameGlobals::timePlayed), 50, sl::Colors::White, nullptr);
+	CreateText(scene, sl::Vec2f(50.0f, 190.0f), "Time Played: " + std::to_string(int(GameGlobals::timePlayed / 60.0f)) + " minutes", 50, sl::Colors::White, nullptr);
 
 
 	scene.RegisterSystem<ButtonSystem>();
@@ -164,7 +164,7 @@ void UIRenderSystem::Run(float dt, sl::Scene& scene)
 		});
 	scene.ForEach<TransformComponent, TextComponent>([&](sl::EntityId id, TransformComponent& transform, TextComponent& text)
 		{
-			gfx.DrawText(transform.pos.x, transform.pos.y, text.text, text.font, text.height, text.color);
+			gfx.DrawText(transform.pos, text.text, text.font, text.height, text.color);
 		});
 
 	gfx.EndView();
