@@ -6,7 +6,6 @@
 static std::random_device dev;
 static std::mt19937 rng(dev());
 
-
 void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 {
 	sl::Vec2f playerPos = GetWorldCollider(scene, GameGlobals::player).GetCenter();
@@ -20,6 +19,17 @@ void EnemyBehaviorSystem::Run(float dt, sl::Scene& scene)
 			bool clearPath = IsPathClear(scene, id, playerPos);
 				switch (behav.behavior)
 				{
+				case BehaviorStage::Spawn:
+				{
+					SpriteComponent& sprite = scene.GetComponent<SpriteComponent>(id);
+					sprite.tint.a += 3.0f * dt;
+					if (sprite.tint.a >= 1.0f)
+					{
+						sprite.tint.a = 1.0f;
+						behav.behavior = BehaviorStage::Approach;
+					}
+					break;
+				}
 				case BehaviorStage::Idle:
 					pathComp.path.clear();
 					pathComp.suspended = true;

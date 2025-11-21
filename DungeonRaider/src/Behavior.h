@@ -6,6 +6,7 @@
 
 enum class BehaviorStage
 {
+	Spawn,
 	Idle,
 	Approach,
 	Attack,

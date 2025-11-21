@@ -101,6 +101,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                                 CreateDeathAnimation(scene, target, 3.0f);
                                 scene.GetComponent<SpriteComponent>(target).tint.a = 0.0f;
                                 scene.GetComponent<ColliderComponent>(target).layer = ColliderComponent::CollisionLayer::Nothing;
+                                scene.GetComponent<MovementComponent>(target).dir = {};
                             }
                             else
                             {
