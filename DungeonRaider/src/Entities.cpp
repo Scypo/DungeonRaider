@@ -19,7 +19,7 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 	scene.AddComponent<SpriteComponent>(player, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(width / 2, height / 2), texture,
 		sl::RectF(0.0f, width, 0.0f, height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(width, height), nullptr));
 
-	scene.AddComponent<WeaponComponent>(player, WeaponComponent{});
+	AttachWeapon(scene, player, WeaponType::AssaultRiffle);
 	GameGlobals::player = player;
 
 	return player;
@@ -38,8 +38,7 @@ sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float hei
 	scene.AddComponent<ColliderComponent>(enemy, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
 	scene.AddComponent<SpriteComponent>(enemy, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(width / 2, height / 2), texture,
 		sl::RectF(0.0f, width, 0.0f, height), sl::Vec2<bool>(false, false), 0.0f, sl::Color(1.0f,0.5f,0.5f,0.0f), sl::Vec2f(width, height), nullptr));
-	scene.AddComponent<WeaponComponent>(enemy, WeaponComponent{});
-	scene.GetComponent<WeaponComponent>(enemy).damage = damage;
+	AttachWeapon(scene, enemy, WeaponType::AssaultRiffle);
 	return enemy;
 }
 
@@ -92,6 +91,24 @@ void DrawHealthBars(sl::Scene& scene)
 					if (fraction >= 0.95f) return;
 				}
 			}
+
+			DrawBar(barPos, barWidth, height, fraction, barColor);
+		});
+}
+
+void DrawReloadBars(sl::Scene& scene)
+{
+	float height = 3.0f;
+	sl::Graphics& gfx = se::Engine::GetGraphics();
+	scene.ForEach<WeaponComponent>([&](sl::EntityId id, WeaponComponent& weapon)
+		{
+			if (weapon.reloadTimeLeft <= 0.0f) return;
+			sl::RectF worldRect = GetWorldCollider(scene, id);
+			float barWidth = worldRect.GetWidth();
+			sl::Vec2f barPos(worldRect.left, worldRect.top - height - 7);
+
+			float fraction = weapon.reloadTimeLeft/ weapon.reloadTime;
+			sl::Color barColor = sl::Colors::White;
 
 			DrawBar(barPos, barWidth, height, fraction, barColor);
 		});

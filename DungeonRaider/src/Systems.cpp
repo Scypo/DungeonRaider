@@ -51,6 +51,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	DrawSprites(scene);
 	gfx.SetDrawLayer(3.0f);
 	DrawHealthBars(scene);
+	DrawReloadBars(scene);
 	gfx.SetDrawLayer(4.0f);
 	DrawFloatingText(scene);
 	//scene.ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
@@ -65,6 +66,18 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.SetDrawLayer(6.0f);
 	DrawHUD(scene);
 	gfx.DrawText(sl::Vec2f(0.0f, -25.0f), "FPS: " + std::to_string(int(1 / dt)), nullptr, 50.0f, sl::Colors::White);
+	
+	int ammoLeft = scene.GetComponent<WeaponComponent>(GameGlobals::player).ammoLeft;
+	int magSize = scene.GetComponent<WeaponComponent>(GameGlobals::player).magSize;
+	std::string zero = ammoLeft < 10 ? "0" : "";
+	if (ammoLeft == 0)
+	{
+		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), "00/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
+	}
+	else
+	{
+		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), zero + std::to_string(ammoLeft) + "/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
+	}
 	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
 	{
 		gfx.SetDrawLayer(7.0f);

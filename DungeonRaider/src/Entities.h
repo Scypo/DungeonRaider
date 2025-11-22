@@ -6,6 +6,7 @@ sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float hei
 sl::EntityId CreateDeathAnimation(sl::Scene& scene, sl::EntityId id, float fadeRate);
 void DrawBar(const sl::Vec2f& pos, float width, float height, float fraction, sl::Color filledColor);
 void DrawHealthBars(sl::Scene& scene);
+void DrawReloadBars(sl::Scene& scene);
 void DrawHUD(sl::Scene& scene);
 void DrawDeathScreen(sl::Scene& scene, float dt);
 

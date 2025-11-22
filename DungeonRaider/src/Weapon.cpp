@@ -7,8 +7,17 @@
 bool WeaponAttack(sl::Scene& scene, sl::EntityId id, sl::Vec2f target, TagComponent immune)
 {
     WeaponComponent& weapon = scene.GetComponent<WeaponComponent>(id);
-    if (weapon.remainingTime > 0) return false;
-    weapon.remainingTime = weapon.cooldown;
+    if (weapon.remainingTime > 0.0f || weapon.ammoLeft == 0 || weapon.reloadTimeLeft > 0.0f) return false;
+    weapon.ammoLeft--;
+    if (weapon.ammoLeft == 0)
+    {
+        weapon.reloadTimeLeft = weapon.reloadTime;
+        weapon.remainingTime = 0.0f;
+    }
+    else
+    {
+        weapon.remainingTime = weapon.cooldown;
+    }
     sl::RectF entityRect = GetWorldCollider(scene, id);
     sl::Vec2f weaponOrigin = sl::Vec2f(entityRect.GetCenter());
 
@@ -17,6 +26,107 @@ bool WeaponAttack(sl::Scene& scene, sl::EntityId id, sl::Vec2f target, TagCompon
 
     CreateProjectile(scene, bulletSpawn, dir, id, immune);
     return true;
+}
+
+void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
+{
+    WeaponComponent weapon{};
+
+    switch (type)
+    {
+    case WeaponType::AssaultRiffle:
+    {
+        weapon.texture = nullptr;
+        weapon.shotSound = nullptr;
+        weapon.height = 12;
+        weapon.width = 24;
+        weapon.origin = { 10, 6 };
+        weapon.damage = 18.0f;
+        weapon.cooldown = 0.2f;
+        weapon.magSize = 28;
+        weapon.ammoLeft = 28;
+        weapon.reloadTime = 2.0f;
+
+        weapon.projTexture = nullptr;
+        weapon.projCollisionSound = nullptr;
+        weapon.projHeight = 4;
+        weapon.projWidth = 4;
+        weapon.projSpeed = 300.0f;
+
+        break;
+    }
+
+    case WeaponType::SMG:
+    {
+        weapon.texture = nullptr;
+        weapon.shotSound = nullptr;
+        weapon.height = 10;
+        weapon.width = 20;
+        weapon.origin = { 8, 5 };
+        weapon.damage = 10.0f;
+        weapon.cooldown = 0.08f;
+        weapon.magSize = 40;
+        weapon.ammoLeft = 40;
+        weapon.reloadTime = 1.5f;
+
+        weapon.projTexture = nullptr;
+        weapon.projCollisionSound = nullptr;
+        weapon.projHeight = 3;
+        weapon.projWidth = 3;
+        weapon.projSpeed = 350.0f;
+
+        break;
+    }
+
+    case WeaponType::DMR:
+    {
+        weapon.texture = nullptr;
+        weapon.shotSound = nullptr;
+        weapon.height = 14;
+        weapon.width = 28;
+        weapon.origin = { 11, 7 };
+        weapon.damage = 35.0f;
+        weapon.cooldown = 0.45f;
+        weapon.magSize = 7;
+        weapon.ammoLeft = 7;
+        weapon.reloadTime = 3.0f;
+
+        weapon.projTexture = nullptr;
+        weapon.projCollisionSound = nullptr;
+        weapon.projHeight = 5;
+        weapon.projWidth = 5;
+        weapon.projSpeed = 250.0f;
+
+        break;
+    }
+
+    case WeaponType::Snipier:
+    {
+        weapon.texture = nullptr;
+        weapon.shotSound = nullptr;
+        weapon.height = 16;
+        weapon.width = 32;
+        weapon.origin = { 13, 8 };
+        weapon.damage = 70.0f;
+        weapon.cooldown = 0.95f;
+        weapon.magSize = 4;
+        weapon.ammoLeft = 4;
+        weapon.reloadTime = 4.0f;
+
+        weapon.projTexture = nullptr;
+        weapon.projCollisionSound = nullptr;
+        weapon.projHeight = 6;
+        weapon.projWidth = 6;
+        weapon.projSpeed = 200.0f;
+
+        break;
+    }
+
+    case WeaponType::None:
+        break;
+    }
+
+    scene.AddComponent<WeaponComponent>(id, std::move(weapon));
 }
 
 void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
@@ -123,6 +233,8 @@ void WeaponSystem::Run(float dt, sl::Scene& scene)
     scene.ForEach<WeaponComponent>([&](sl::EntityId id, WeaponComponent& weapon)
         {
             weapon.remainingTime -= dt;
+            weapon.reloadTimeLeft -= dt;
+            if (weapon.ammoLeft == 0 && weapon.reloadTimeLeft <= 0.0f) weapon.ammoLeft = weapon.magSize;
         });
 }
 
