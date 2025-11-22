@@ -344,8 +344,7 @@ void SpawnObstacles(TilesetChunk& chunk, RoomTrigger& trigger)
                 assert(x < chunk.width);
                 if (!chunk.collisionGrid[size_t(yStart * chunk.width + x)])
                 {
-                    chunk.collisionGrid[size_t(yStart * chunk.width + x)] = true;
-                    chunk.uvIndex[size_t(yStart * chunk.width + x)] = TileSprite::wallTop;
+                    chunk.SetTile(x, yStart, true, TileSprite::fullWall, TileType::fullWall);
                 }
             }
             HwallPositions.push_back(yStart);
@@ -355,19 +354,17 @@ void SpawnObstacles(TilesetChunk& chunk, RoomTrigger& trigger)
             for (int y = yStart; y < yEnd; y++)
             {
                 assert(y < chunk.width);
-                chunk.collisionGrid[size_t(y * chunk.width + xStart)] = 1;
-                chunk.uvIndex[size_t(y * chunk.width + xStart)] = TileSprite::wallTop;
+                chunk.SetTile(xStart, y, true, TileSprite::wallTop, TileType::topWall);
+                
             }
 
             if (!chunk.collisionGrid[size_t(yEnd * chunk.width + xStart)]) //if there is a wall above it makes sure that it is connected in T shape
             {
-                chunk.collisionGrid[size_t(yEnd * chunk.width + xStart)] = 1;
-                chunk.uvIndex[size_t(yEnd * chunk.width + xStart)] = TileSprite::wallTop;
+                chunk.SetTile(xStart, yEnd, true, TileSprite::fullWall, TileType::fullWall);
             }
             else
             {
-                chunk.collisionGrid[size_t(yEnd * chunk.width + xStart)] = 1;
-                chunk.uvIndex[size_t(yEnd * chunk.width + xStart)] = TileSprite::wallTop;
+                chunk.SetTile(xStart, yEnd, true, TileSprite::wallTop, TileType::topWall);
             }
             VwallPositions.push_back(xStart);
         }
