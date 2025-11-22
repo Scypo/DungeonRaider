@@ -53,7 +53,7 @@ namespace se
 
         static inline void Quit()
         {
-            Engine::running = true;
+            Engine::running = false;
         }
 
         template<typename Game>
@@ -63,14 +63,13 @@ namespace se
             Engine::running = true;
             game.get()->OnBegin();
 
+            assert(!ecs->Empty());
             while ( Engine::running && window->IsRunning())
             {
                 float dt = frameTimer.Mark();
                 ed->PollEvents();
 
                 graphics->BeginFrame();
-                assert(ecs->GetCurrentScene());
-                assert(!ecs->Empty());
                 ecs->Run(dt);
                 game->OnUpdate(dt);
                 graphics->EndFrame();

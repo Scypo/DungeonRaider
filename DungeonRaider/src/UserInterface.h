@@ -20,5 +20,3 @@ struct TextComponent
 	sl::Color color = sl::Colors::White;
 	sl::Font* font = nullptr;
 };
-sl::Scene& CreateBuyScreen();
-sl::Scene& CreateReportScreen();

@@ -4,7 +4,8 @@
 #include"Components.h"
 #include"Pathfinder.h"
 #include"Behavior.h"
-#include"UserInterface.h"
+#include"Scenes.h"
+
 
 sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float height, sl::Texture* texture)
 {

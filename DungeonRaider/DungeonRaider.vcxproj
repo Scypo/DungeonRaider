@@ -163,6 +163,7 @@
     <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Pathfinder.cpp" />
+    <ClCompile Include="src\Scenes.cpp" />
     <ClCompile Include="src\Systems.cpp" />
     <ClCompile Include="src\UserInterface.cpp" />
     <ClCompile Include="src\Weapon.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="src\game.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\Pathfinder.h" />
+    <ClInclude Include="src\Scenes.h" />
     <ClInclude Include="src\Systems.h" />
     <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Weapon.h" />

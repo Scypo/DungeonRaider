@@ -64,7 +64,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.BeginView();
 	gfx.SetDrawLayer(6.0f);
 	DrawHUD(scene);
-	
+	gfx.DrawText(sl::Vec2f(0.0f, -25.0f), "FPS: " + std::to_string(int(1 / dt)), nullptr, 50.0f, sl::Colors::White);
 	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
 	{
 		gfx.SetDrawLayer(7.0f);
