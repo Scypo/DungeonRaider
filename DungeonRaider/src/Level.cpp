@@ -196,8 +196,8 @@ void CreateLevel(sl::Scene& scene)
 {
     sl::Texture* atlas = se::Engine::GetGraphics().LoadTexture("assets/images/tile_set8.png");
 
-    int width = 30;
-    int height = 30;
+    int width = 21;
+    int height = 21;
     int tileSize = 32;
 
     sl::Vec2i positions[5] = 

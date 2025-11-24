@@ -11,8 +11,8 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 {
 	sl::EntityId player = scene.CreateEntity();
 	scene.AddComponent<TagComponent>(player, TagComponent{ 0 | uint32_t(Tags::player) });
-	scene.AddComponent<HealthComponent>(player, HealthComponent{ 100.0f, 100.0f });
-	scene.AddComponent<ShieldComponent>(player, ShieldComponent{ 100.0f, 100.0f, 5.0f, 1.5f,1.5f });
+	scene.AddComponent<HealthComponent>(player, HealthComponent{ 150.0f, 150.0f });
+	scene.AddComponent<ShieldComponent>(player, ShieldComponent{ 120.0f, 120.0f, 5.0f, 1.5f,1.5f });
 	scene.AddComponent<TransformComponent>(player, TransformComponent{ sl::Vec2f(450,350), 0.0f });
 	scene.AddComponent<MovementComponent>(player, MovementComponent{});
 	scene.AddComponent<ColliderComponent>(player, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });

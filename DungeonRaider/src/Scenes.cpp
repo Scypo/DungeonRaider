@@ -115,7 +115,14 @@ sl::Scene& CreateReportScreen()
 	CreateText(scene, sl::Vec2f(50.0f, 70.0f), "Rooms Cleared: " + std::to_string(GameGlobals::roomsCleared), 50, sl::Colors::White, nullptr);
 	CreateText(scene, sl::Vec2f(50.0f, 130.0f), "Enemies Killed: " + std::to_string(GameGlobals::killedEnemies), 50, sl::Colors::White, nullptr);
 	CreateText(scene, sl::Vec2f(50.0f, 190.0f), "Time Played: " + std::to_string(int(GameGlobals::timePlayed / 60.0f)) + " minutes", 50, sl::Colors::White, nullptr);
-
+	CreateText(scene, sl::Vec2f(50.0f, 300.0f), "Press Enter To Continue" , 25, sl::Colors::White, nullptr);
+	sl::EntityId button = CreateButton(scene, sl::Vec2f(0.0f, 0.0f), sl::Vec2f(gfx.GetCanvasWidth(), gfx.GetCanvasHeight()), nullptr, sl::RectF{}, [&]()
+		{
+			CreateMainMenu();
+			se::Engine::GetECS().SwitchScenes("MainMenu", true);
+			se::Engine::GetKeyboard().Flush();
+		});
+	scene.GetComponent<SpriteComponent>(button).tint = sl::Color(0.0f,0.0f,0.0f,0.0f);
 
 	scene.RegisterSystem<ButtonSystem>();
 	scene.RegisterSystem<ExecuteEventSystem>();
@@ -141,7 +148,7 @@ sl::Scene& CreateMainMenu()
 	CreateButton(scene, sl::Vec2f(200.0f, 12.0f), sl::Vec2f(240.0f, 96.0f), texture, uvs[0], [&]()
 		{
 			CreateSimulation();
-			se::Engine::GetECS().SwitchScenes("Level", false);
+			se::Engine::GetECS().SwitchScenes("Level", true);
 			se::Engine::GetKeyboard().Flush();
 		});
 

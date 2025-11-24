@@ -5,7 +5,7 @@
 #include"Weapon.h"
 #include "Scenes.h"
 
-sl::EntityId CreateButton(sl::Scene& scene, sl::Vec2f pos, sl::Vec2f size, sl::Texture* texture, sl::RectF& uv, std::function<void()> callback)
+sl::EntityId CreateButton(sl::Scene& scene, sl::Vec2f pos, sl::Vec2f size, sl::Texture* texture, const sl::RectF& uv, std::function<void()> callback)
 {
 	sl::EntityId button = scene.CreateEntity();
 	scene.AddComponent<TransformComponent>(button, TransformComponent{ pos, 0.0f });
