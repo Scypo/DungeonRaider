@@ -29,8 +29,11 @@ void CameraSystem::Run(float dt, sl::Scene& scene)
 				cam.pos.y -= se::Engine::GetGraphics().GetCanvasHeight() * 0.5f;
 
 				float scroll = se::Engine::GetMouse().GetScrollOffsetY();
+#ifndef NDEBUG
+
 				if (scroll > 0) cam.zoom += 0.05f;
 				if (scroll < 0) cam.zoom = std::max(0.05f, cam.zoom - 0.05f);
+#endif
 			}
 		});
 }

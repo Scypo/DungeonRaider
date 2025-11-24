@@ -41,16 +41,16 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
         weapon.height = 12;
         weapon.width = 24;
         weapon.origin = { 10, 6 };
-        weapon.damage = 18.0f;
-        weapon.cooldown = 0.2f;
+        weapon.damage = 30.0f;
+        weapon.cooldown = 0.3f;
         weapon.magSize = 28;
         weapon.ammoLeft = 28;
         weapon.reloadTime = 2.0f;
 
         weapon.projTexture = nullptr;
         weapon.projCollisionSound = nullptr;
-        weapon.projHeight = 4;
-        weapon.projWidth = 4;
+        weapon.projHeight = 7;
+        weapon.projWidth = 7;
         weapon.projSpeed = 300.0f;
 
         break;
@@ -63,16 +63,16 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
         weapon.height = 10;
         weapon.width = 20;
         weapon.origin = { 8, 5 };
-        weapon.damage = 10.0f;
-        weapon.cooldown = 0.08f;
+        weapon.damage = 15.0f;
+        weapon.cooldown = 0.1f;
         weapon.magSize = 40;
         weapon.ammoLeft = 40;
         weapon.reloadTime = 1.5f;
 
         weapon.projTexture = nullptr;
         weapon.projCollisionSound = nullptr;
-        weapon.projHeight = 3;
-        weapon.projWidth = 3;
+        weapon.projHeight = 5;
+        weapon.projWidth = 5;
         weapon.projSpeed = 350.0f;
 
         break;
@@ -85,16 +85,16 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
         weapon.height = 14;
         weapon.width = 28;
         weapon.origin = { 11, 7 };
-        weapon.damage = 35.0f;
-        weapon.cooldown = 0.45f;
+        weapon.damage = 45.0f;
+        weapon.cooldown = 0.5f;
         weapon.magSize = 7;
         weapon.ammoLeft = 7;
         weapon.reloadTime = 3.0f;
 
         weapon.projTexture = nullptr;
         weapon.projCollisionSound = nullptr;
-        weapon.projHeight = 5;
-        weapon.projWidth = 5;
+        weapon.projHeight = 10;
+        weapon.projWidth = 10;
         weapon.projSpeed = 250.0f;
 
         break;
@@ -107,16 +107,16 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
         weapon.height = 16;
         weapon.width = 32;
         weapon.origin = { 13, 8 };
-        weapon.damage = 70.0f;
-        weapon.cooldown = 0.95f;
+        weapon.damage = 60.0f;
+        weapon.cooldown = 1.0f;
         weapon.magSize = 4;
         weapon.ammoLeft = 4;
         weapon.reloadTime = 4.0f;
 
         weapon.projTexture = nullptr;
         weapon.projCollisionSound = nullptr;
-        weapon.projHeight = 6;
-        weapon.projWidth = 6;
+        weapon.projHeight = 12;
+        weapon.projWidth = 12;
         weapon.projSpeed = 200.0f;
 
         break;

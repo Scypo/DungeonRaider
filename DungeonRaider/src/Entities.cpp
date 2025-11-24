@@ -25,20 +25,69 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 	return player;
 }
 
-sl::EntityId CreateEnemy(sl::Scene& scene, sl::Vec2f pos, float width, float height, float health, float damage, sl::Texture* texture)
+sl::EntityId CreateEnemyBase(sl::Scene& scene, sl::Vec2f pos, float width, float height, float health, sl::Texture* texture)
 {
 	sl::EntityId enemy = scene.CreateEntity();
 	scene.AddComponent<TagComponent>(enemy, TagComponent{ 0 | uint32_t(Tags::enemy) });
 	scene.AddComponent<PathfindingComponent>(enemy, PathfindingComponent{});
 	scene.AddComponent<EnemyBehaviorComponent>(enemy, EnemyBehaviorComponent{ BehaviorStage::Spawn, 400.0f, 0.0f, 0.0f, 5, 5, {} });
-	scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 100.0f, 100.0f, 5.0f, 1.5f,1.5f });
 	scene.AddComponent<HealthComponent>(enemy, HealthComponent{ health, health });
 	scene.AddComponent<TransformComponent>(enemy, TransformComponent{ pos, 0.0f });
 	scene.AddComponent<MovementComponent>(enemy, MovementComponent{});
 	scene.AddComponent<ColliderComponent>(enemy, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
 	scene.AddComponent<SpriteComponent>(enemy, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(width / 2, height / 2), texture,
 		sl::RectF(0.0f, width, 0.0f, height), sl::Vec2<bool>(false, false), 0.0f, sl::Color(1.0f,0.5f,0.5f,0.0f), sl::Vec2f(width, height), nullptr));
-	AttachWeapon(scene, enemy, WeaponType::AssaultRiffle);
+	return enemy;
+}
+
+sl::EntityId CreateRandomEnemy(sl::Scene& scene, sl::Vec2f pos, float difficulty)
+{
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
+	static std::uniform_int_distribution<int> typeDist(0, int(WeaponType::None) - 1);
+	WeaponType type = WeaponType(typeDist(rng));
+	sl::EntityId enemy{};
+	switch (type)
+	{
+	case WeaponType::AssaultRiffle:
+	{
+		enemy = CreateEnemyBase(scene, pos, 40.0f, 40.0f, 100.0f * difficulty, nullptr);
+		AttachWeapon(scene, enemy, WeaponType::AssaultRiffle);
+		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Red;
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 100.0f * difficulty, 100.0f * difficulty, 5.0f, 0.0f,1.5f });
+		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
+		break;
+	}
+	case WeaponType::SMG:
+	{
+		enemy = CreateEnemyBase(scene, pos, 30.0f, 30.0f, 90.0f, nullptr);
+		AttachWeapon(scene, enemy, WeaponType::SMG);
+		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Green;
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 120.0f * difficulty, 120.0f * difficulty, 4.5f, 0.0f,1.3f });
+		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
+		break;
+	}
+	case WeaponType::DMR:
+	{
+		enemy = CreateEnemyBase(scene, pos, 40.0f, 40.0f, 80.0f, nullptr);
+		AttachWeapon(scene, enemy, WeaponType::DMR);
+		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Magenta;
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 30.0f * difficulty, 30.0f * difficulty, 5.0f, 0.0f,1.55f });
+		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
+		break;
+	}
+	case WeaponType::Snipier:
+	{
+		enemy = CreateEnemyBase(scene, pos, 30.0f, 30.0f, 70.0f, nullptr);
+		AttachWeapon(scene, enemy, WeaponType::Snipier);
+		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Cyan;
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 10.0f * difficulty, 10.0f * difficulty, 5.5f, 0.0f,1.75f });
+		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
+		break;
+	}
+	default:
+		break;
+	}
 	return enemy;
 }
 
@@ -196,6 +245,11 @@ void PlayerSystem::Run(float dt, sl::Scene& scene)
 		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
 
 		WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
+	}
+	if (kbd.KeyIsPressed('R'))
+	{
+		weapon.ammoLeft = 0;
+		weapon.reloadTimeLeft = weapon.reloadTime;
 	}
 	weapon.remainingTime -= dt;
 }

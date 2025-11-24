@@ -7,6 +7,8 @@
 #include"Components.h"
 
 static DifficultyManager difManager;
+static std::random_device dev;
+static std::mt19937 rng(dev());
 
 TilesetChunk::TilesetChunk(sl::Vec2i pos, int width, int height, int tileSize, sl::Texture* texture)
 	:
@@ -237,11 +239,12 @@ void DrawLevel(sl::Scene& scene)
             int bottom = std::max(0, int((worldTop - chunk.worldRect.top) / chunk.tileSize));
             int top = std::min(chunk.height - 1, int(std::ceil((worldBottom - chunk.worldRect.top) / chunk.tileSize)));
 
+#ifndef NDEBUG
             left = 0;                   //TEMPORARY SO YOU CAN USE ZOOM ON CAMERA (IM TO LAZY TO IMPLEMENT IT PROPERLY ) TO BE REMOVED IN LATER VERSIONS
             right = chunk.width - 1;    //TEMPORARY SO YOU CAN USE ZOOM ON CAMERA (IM TO LAZY TO IMPLEMENT IT PROPERLY ) TO BE REMOVED IN LATER VERSIONS
             top = chunk.height - 1;                    //TEMPORARY SO YOU CAN USE ZOOM ON CAMERA (IM TO LAZY TO IMPLEMENT IT PROPERLY ) TO BE REMOVED IN LATER VERSIONS
             bottom = 0;  //TEMPORARY SO YOU CAN USE ZOOM ON CAMERA (IM TO LAZY TO IMPLEMENT IT PROPERLY ) TO BE REMOVED IN LATER VERSIONS
-
+#endif
             for (int y = top; y >= bottom; y--)
             {
                 for (int x = left; x <= right; x++)
@@ -280,8 +283,6 @@ void SpawnObstacles(TilesetChunk& chunk, RoomTrigger& trigger)
     int roomWidth = int(trigger.worldBounds.GetWidth() / chunk.tileSize);
     int roomHeight = int(trigger.worldBounds.GetHeight() / chunk.tileSize);
 
-    std::random_device rd;
-    std::mt19937 rng(rd());
     std::uniform_int_distribution<int> dirDist(0, 1); // 1 = vertical; 0 = horizontal
     std::uniform_int_distribution<int> hLengthDist(static_cast<int>( roomWidth * 0.3f), static_cast<int>(roomWidth * 0.5f));  // Horizontal wall length
     std::uniform_int_distribution<int> vLengthDist(static_cast<int>(roomHeight * 0.3f), static_cast<int>(roomHeight * 0.5f)); // Vertical wall length
@@ -611,8 +612,6 @@ sl::EntityId CreateTileChunk(sl::Scene& scene, sl::Vec2i pos, int width, int hei
 
 void CreateEnemiesInRoom(sl::Scene& scene, const TilesetChunk& chunk, const RoomTrigger& trigger, int least, int most)
 {
-    std::random_device rd;
-    std::mt19937 rng(rd());
     std::uniform_int_distribution<int> countDist(least, most);
 
     constexpr float biggestEnemySize = 40.0f;
@@ -670,9 +669,8 @@ void CreateEnemiesInRoom(sl::Scene& scene, const TilesetChunk& chunk, const Room
         if (valid)
         {
             usedPos.push_back(spawnPos);
-            float health = 100.0f * difManager.GetDifficultyScale();
-            float damage = 20.0f * difManager.GetDifficultyScale();
-            CreateEnemy(scene, spawnPos, 40.0f, 40.0f, health, damage, nullptr);
+            sl::EntityId enemy = CreateRandomEnemy(scene, spawnPos, difManager.GetDifficultyScale());
+            
         }
     }
 }
