@@ -2,9 +2,6 @@
 #include<unordered_map>
 #include<unordered_set>
 
-#include<glm/glm.hpp>
-#include<glm/gtc/matrix_transform.hpp>
-
 #include"Rect.h"
 #include"Color.h"
 #include"Window.h"
@@ -13,6 +10,7 @@
 #include"Shader.h"
 #include"Texture.h"
 #include"Font.h"
+#include"Matrix.h"
 #undef DrawText
 
 namespace sl
@@ -22,8 +20,8 @@ namespace sl
     private:
         struct ViewProjMat
         {
-            alignas(16) glm::mat4 view;
-            alignas(16) glm::mat4 projection;
+            alignas(16) Mat4f view;
+            alignas(16) Mat4f projection;
         };
         struct TextureVertex
         {
@@ -43,16 +41,16 @@ namespace sl
         struct InstanceData
         {
         public:
-            InstanceData(glm::mat4 transform, Color color, float textureSlot);
+            InstanceData(Mat4f transform, Color color, float textureSlot);
         public:
-            alignas(16) glm::mat4 transform;
+            alignas(16) Mat4f transform;
             alignas(16) Color color;
             alignas(16) float textureSlot;
         };
         struct Renderable
         {
         public:
-            Renderable(float x, float y, float z, float width, float height, RectF uv, const Texture* texture, glm::mat4 transform, Color color);
+            Renderable(float x, float y, float z, float width, float height, RectF uv, const Texture* texture, Mat4f transform, Color color);
         public:
             float x, y, z = 0;
             float width, height;
@@ -71,7 +69,7 @@ namespace sl
         void BeginView(Vec2f cameraPosition = { 0.0f, 0.0f }, float zoom = 1.0f);
         void EndView(std::vector<Shader*>& shaders);
         void EndView(Shader* shader = nullptr);
-        void SetDrawLayer(float layer);
+        void SetDrawDepth(float depth);
         void SetCanvasSize(Vec2f size);
         void SetCanvasWidth(float width);
         void SetCanvasHeight(float height);
@@ -107,6 +105,7 @@ namespace sl
         RectF GetCanvasRect()const;
         float GetCanvasWidth()const;
         float GetCanvasHeight()const;
+        Vec2f GetCanvasSize()const;
     public:
         void BindShader(unsigned int shader);
         void BindShaderStorageBuffer(unsigned int ssbo);
@@ -138,7 +137,7 @@ namespace sl
         Texture* framebufferTexture = nullptr;
         Texture* framebufferTextureSecondary = nullptr;
         //others
-        float curDrawLayer = 0;
+        float curDrawDepth = 0;
         Texture* blankTexture = nullptr;
         unsigned int vpMatUbo = 0;
         unsigned int vpMatUboBindingPoint = 0;

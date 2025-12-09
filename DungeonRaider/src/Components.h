@@ -12,6 +12,18 @@ struct GameGlobals
 	inline static int roomsCleared = 0;
 	inline static int killedEnemies = 0;
 	inline static float timePlayed = 0.0f;
+	inline static void Reset()
+	{
+		player = -1;
+		camera = -1;
+		score = 0.0f;
+		currentRoom = -1;
+		elapsedTime = 0.0f;
+		spendingPoints = 0;
+		roomsCleared = 0;
+		killedEnemies = 0;
+		timePlayed = 0.0f;
+	}
 };
 
 struct TransformComponent

@@ -20,3 +20,11 @@ void DungeonRaider::OnBegin()
     CreateMainMenu();
     se::Engine::GetECS().SwitchScenes("MainMenu", false);
 }
+
+void DungeonRaider::OnUpdate(float dt)
+{
+    if (se::Engine::GetKeyboard().KeyIsPressed(sl::Key::F11))
+    {
+        se::Engine::GetWindow().ToggleFullscreen();
+    }
+}

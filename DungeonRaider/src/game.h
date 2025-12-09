@@ -4,4 +4,5 @@
 class DungeonRaider : public se::Game
 {
 	void OnBegin() override;
+	void OnUpdate(float dt) override;
 };

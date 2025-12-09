@@ -31,7 +31,7 @@ sl::EntityId CreateText(sl::Scene& scene, sl::Vec2f pos, const std::string& text
 
 void ButtonSystem::Run(float dt, sl::Scene& scene)
 {
-	if (se::Engine().GetKeyboard().KeyIsPressed(GLFW_KEY_ESCAPE))
+	if (se::Engine().GetKeyboard().KeyIsPressed(sl::Key::Escape))
 	{
 		se::Engine::GetECS().SwitchScenes("Level", true);
 		se::Engine::GetKeyboard().Flush();
@@ -41,7 +41,7 @@ void ButtonSystem::Run(float dt, sl::Scene& scene)
 	sl::Vec2f mouseWorldPos = { mouseScreenPos.x / se::Engine::GetWindow().GetWidth() * gfx.GetCanvasWidth(),
 		mouseScreenPos.y / se::Engine::GetWindow().GetHeight() * gfx.GetCanvasHeight() };
 
-	bool action = se::Engine::GetMouse().LeftIsPressed() || se::Engine::GetKeyboard().KeyIsPressed(GLFW_KEY_SPACE) || se::Engine::GetKeyboard().KeyIsPressed(GLFW_KEY_ENTER);
+	bool action = se::Engine::GetMouse().LeftIsPressed() || se::Engine::GetKeyboard().KeyIsPressed(sl::Key::Space) || se::Engine::GetKeyboard().KeyIsPressed(sl::Key::Enter);
 	scene.ForEach<CallbackComponent, ColliderComponent, SpriteComponent>([&](sl::EntityId id, CallbackComponent& button, ColliderComponent& collider, SpriteComponent& sprite)
 		{
 			sl::RectF worldRect = GetWorldCollider(scene, id);
@@ -67,7 +67,7 @@ void UIRenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.BeginFrame();
 	gfx.BeginView();
 
-	gfx.SetDrawLayer(0.0f);
+	gfx.SetDrawDepth(0.0f);
 	scene.ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
 		{
 			if (sprite.texture)
@@ -80,7 +80,7 @@ void UIRenderSystem::Run(float dt, sl::Scene& scene)
 				gfx.DrawRect(transform.pos + sprite.offset, sprite.size, sprite.tint);
 			}
 		});
-	gfx.SetDrawLayer(1.0f);
+	gfx.SetDrawDepth(1.0f);
 	scene.ForEach<TransformComponent, TextComponent>([&](sl::EntityId id, TransformComponent& transform, TextComponent& text)
 		{
 			gfx.DrawText(transform.pos, text.text, text.font, text.height, text.color);

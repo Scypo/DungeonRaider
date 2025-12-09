@@ -18,6 +18,8 @@ sl::Scene& CreateSimulation()
 
 	gfx.LoadTexture("assets/images/tile_set8.png");
 
+	GameGlobals::Reset();
+
 	CreateLevel(scene);
 	CreatePlayer(scene, { 0.0f,0.0f }, 40.0f, 40.0f, gfx.LoadTexture("assets/images/lessShittyCharacter.png"));
 	CreateCamera(scene);

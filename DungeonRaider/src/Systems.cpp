@@ -48,14 +48,14 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	sl::Graphics& gfx = se::Engine::GetGraphics();
 	Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
 	gfx.BeginView(cam.pos, cam.zoom);
-	gfx.SetDrawLayer(0.0f);
+	gfx.SetDrawDepth(0.0f);
 	DrawLevel(scene);
-	gfx.SetDrawLayer(2.0f);
+	gfx.SetDrawDepth(2.0f);
 	DrawSprites(scene);
-	gfx.SetDrawLayer(3.0f);
+	gfx.SetDrawDepth(3.0f);
 	DrawHealthBars(scene);
 	DrawReloadBars(scene);
-	gfx.SetDrawLayer(4.0f);
+	gfx.SetDrawDepth(4.0f);
 	DrawFloatingText(scene);
 	//scene.ForEach<PathfindingComponent>([&](sl::EntityId id, PathfindingComponent& pathComp)//Draw Paths
 	//	{
@@ -66,7 +66,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	//	});
 	gfx.EndView();
 	gfx.BeginView();
-	gfx.SetDrawLayer(6.0f);
+	gfx.SetDrawDepth(6.0f);
 	DrawHUD(scene);
 	gfx.DrawText(sl::Vec2f(0.0f, -25.0f), "FPS: " + std::to_string(int(1 / dt)), nullptr, 50.0f, sl::Colors::White);
 	
@@ -83,7 +83,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	}
 	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
 	{
-		gfx.SetDrawLayer(7.0f);
+		gfx.SetDrawDepth(7.0f);
 		DrawDeathScreen(scene, dt);
 	}
 	gfx.EndView();

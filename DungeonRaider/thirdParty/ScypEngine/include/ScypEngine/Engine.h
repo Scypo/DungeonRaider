@@ -31,7 +31,7 @@ namespace se
     public:
         static inline void Init(int windowWidth, int windowHeight, const std::string& windowTitle)
         {
-            window = new sl::Window(windowTitle.c_str(), windowWidth, windowHeight, 0);
+            window = new sl::Window(windowTitle.c_str(), windowWidth, windowHeight, 1);
             graphics = new sl::Graphics(window);
             audio = new sl::Audio;
             mouse = new sl::Mouse;

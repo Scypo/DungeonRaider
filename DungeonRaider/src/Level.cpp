@@ -253,19 +253,19 @@ void DrawLevel(sl::Scene& scene)
                     sl::Vec2f tilePos = transform.pos + sl::Vec2f(float(x), float(y)) * float(chunk.tileSize);
                     TileSprite type = chunk.uvIndex[index];
                     sl::Vec2f size = { float(chunk.tileSize), float(chunk.tileSize) };
-                    gfx.SetDrawLayer(0.0f);
+                    gfx.SetDrawDepth(0.0f);
                     if (type != TileSprite::temp)
                     {
                         sl::Vec2f offset = { 0.0f, 0.0f };
                         if (chunk.tileTypes[index] == TileType::fullWall)
                         {
-                            gfx.SetDrawLayer(5.0f);
+                            gfx.SetDrawDepth(5.0f);
                             offset.y -= chunk.tileSize / 2;
                             size.y *= 1.5f;
                         }
                         else if (chunk.tileTypes[index] == TileType::topWall)
                         {
-                            gfx.SetDrawLayer(5.0f);
+                            gfx.SetDrawDepth(5.0f);
                             offset.y -= chunk.tileSize / 2;
                         }
                         const sl::RectF* uv = &chunk.uvs[size_t(size_t(type))];
@@ -606,7 +606,7 @@ sl::EntityId CreateTileChunk(sl::Scene& scene, sl::Vec2i pos, int width, int hei
     scene.AddComponent<TilesetChunk>(chunkId, std::move(chunk));
     scene.AddComponent<RoomTrigger>(chunkId, std::move(trigger));
     scene.AddComponent<TransformComponent>(chunkId, TransformComponent{ sl::Vec2f(pos), 0.0f });
-    scene.AddComponent<RoomEncounter>(chunkId, RoomEncounter{ 1,2,5,1.0f,1.0f });
+    scene.AddComponent<RoomEncounter>(chunkId, RoomEncounter{ 3,2,5,1.5f,1.5f });
     return chunkId;
 }
 
