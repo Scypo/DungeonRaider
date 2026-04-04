@@ -23,6 +23,7 @@ sl::Scene& CreateSimulation()
 	CreateLevel(scene);
 	CreatePlayer(scene, { 0.0f,0.0f }, 40.0f, 40.0f, gfx.LoadTexture("assets/images/lessShittyCharacter.png"));
 	CreateCamera(scene);
+	scene.GetComponent<Camera>(GameGlobals::camera).pos = scene.GetComponent<RoomTrigger>(GameGlobals::currentRoom).worldBounds.GetCenter();//scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
 
 	scene.RegisterSystem<PlayerSystem>();
 	scene.RegisterSystem<ShieldSystem>();

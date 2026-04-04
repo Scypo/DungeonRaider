@@ -24,7 +24,7 @@ void CameraSystem::Run(float dt, sl::Scene& scene)
 	static std::mt19937 rng(dev());
 	scene.ForEach<Camera>([&](sl::EntityId id, Camera& cam)
 		{
-			if(cam.active)
+			if (cam.active)
 			{
 				if (cam.shakePower != 0.0f)
 				{
@@ -36,8 +36,22 @@ void CameraSystem::Run(float dt, sl::Scene& scene)
 				cam.offset *= 0.9f;
 				if (cam.offset.GetLengthSq() < sl::Vec2f(0.1f, 0.1f).GetLengthSq()) cam.offset = { 0.0f,0.0f };
 
-				cam.pos = scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
-
+				cam.pos.x += se::Engine::GetGraphics().GetCanvasWidth() * 0.5f;
+				cam.pos.y += se::Engine::GetGraphics().GetCanvasHeight() * 0.5f;
+				sl::Vec2f target = scene.GetComponent<RoomTrigger>(GameGlobals::currentRoom).worldBounds.GetCenter();
+				sl::Vec2f playerToCenter = target - scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
+				const float maxDist = scene.GetComponent<RoomTrigger>(GameGlobals::currentRoom).worldBounds.GetHeight() * 0.2f;
+				const float maxDistSq = maxDist * maxDist;
+				if (playerToCenter.GetLengthSq() > maxDistSq)
+				{
+					target = scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
+				}
+				float targetDistSq = (target - cam.pos).GetLengthSq();
+				sl::Vec2f step = (target - cam.pos).Normalize();
+				float pace = 200.0f;
+				if (targetDistSq > 10.0f) cam.pos += step * pace * dt;
+				else cam.pos = target;
+				
 				cam.pos.x -= se::Engine::GetGraphics().GetCanvasWidth() * 0.5f;
 				cam.pos.y -= se::Engine::GetGraphics().GetCanvasHeight() * 0.5f;
 
