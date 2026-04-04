@@ -96,7 +96,7 @@ struct Camera
 	float zoom = 1.0f;
 	bool active = true;
 	sl::Vec2f offset = { 0.0f,0.0f };
-	bool shake = false;
+	float shakePower = 0.0f;
 };
 
 struct CallbackComponent
@@ -111,7 +111,10 @@ inline sl::EntityId CreateCamera(sl::Scene& scene)
 	GameGlobals::camera = camera;
 	return camera;
 }
-
+inline void ShakeCamera(Camera& cam, float power)
+{
+	cam.shakePower = std::max(cam.shakePower, power);
+}
 inline sl::RectF GetWorldCollider(sl::Scene& scene, sl::EntityId id)
 {
 	assert(scene.HasComponent<TransformComponent>(id) && scene.HasComponent<ColliderComponent>(id));

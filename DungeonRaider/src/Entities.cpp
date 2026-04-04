@@ -245,7 +245,11 @@ void PlayerSystem::Run(float dt, sl::Scene& scene)
 		};
 		sl::Vec2f mouseWorldPos = mouseCanvas + cam.pos;
 
-		WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) });
+		if (WeaponAttack(scene, GameGlobals::player, mouseWorldPos, TagComponent{ 0 | uint32_t(Tags::player) }))
+		{
+			float shake = scene.GetComponent<WeaponComponent>(GameGlobals::player).damage * 0.2f;
+			ShakeCamera(cam, shake);//TODO if ever player can equip diff weapons shake power should be adjusted
+		}
 	}
 	if (kbd.KeyIsPressed('R') && weapon.reloadTimeLeft <= 0.0f)
 	{

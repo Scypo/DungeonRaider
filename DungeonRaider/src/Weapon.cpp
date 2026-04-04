@@ -198,6 +198,10 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                                 shield.shield = std::max(0.0f, shield.shield - projectile.damage);
                             }
                             shield.cooldownLeft = shield.regenCooldown;
+                            if (target == GameGlobals::player)
+                            {
+                                ShakeCamera(scene.GetComponent<Camera>(GameGlobals::camera), projectile.damage * 0.25f * (shield.maxShield - shield.shield) / shield.maxShield );
+                            }
                         }
                         else
                         {

@@ -1,4 +1,5 @@
 #include<algorithm>
+#include<random>
 
 #include "Systems.h"
 #include"Components.h"
@@ -19,10 +20,22 @@ void MovementSystem::Run(float dt, sl::Scene& scene)
 
 void CameraSystem::Run(float dt, sl::Scene& scene)
 {
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
 	scene.ForEach<Camera>([&](sl::EntityId id, Camera& cam)
 		{
 			if(cam.active)
 			{
+				if (cam.shakePower != 0.0f)
+				{
+					std::uniform_real_distribution<float> offset(-cam.shakePower, cam.shakePower);
+					cam.offset.x += offset(rng);
+					cam.offset.y += offset(rng);
+					cam.shakePower = 0.0f;
+				}
+				cam.offset *= 0.9f;
+				if (cam.offset.GetLengthSq() < sl::Vec2f(0.1f, 0.1f).GetLengthSq()) cam.offset = { 0.0f,0.0f };
+
 				cam.pos = scene.GetComponent<TransformComponent>(GameGlobals::player).pos;
 
 				cam.pos.x -= se::Engine::GetGraphics().GetCanvasWidth() * 0.5f;
@@ -47,7 +60,7 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 {
 	sl::Graphics& gfx = se::Engine::GetGraphics();
 	Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
-	gfx.BeginView(cam.pos, cam.zoom);
+	gfx.BeginView(cam.pos + cam.offset, cam.zoom);
 	gfx.SetDrawDepth(0.0f);
 	DrawLevel(scene);
 	gfx.SetDrawDepth(2.0f);
