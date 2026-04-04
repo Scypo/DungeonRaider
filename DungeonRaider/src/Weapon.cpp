@@ -25,19 +25,24 @@ bool WeaponAttack(sl::Scene& scene, sl::EntityId id, sl::Vec2f target, TagCompon
     sl::Vec2f bulletSpawn = weaponOrigin - sl::Vec2f(weapon.projWidth / 2, weapon.projHeight / 2);
 
     CreateProjectile(scene, bulletSpawn, dir, id, immune);
+    se::Engine::GetAudio().PlaySound(weapon.shotSound);
     return true;
 }
 
 void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
 {
     WeaponComponent weapon{};
+    static sl::Sound* arShotSound = se::Engine::GetAudio().LoadSound("assets/sounds/shot.wav");
+    static sl::Sound* smgShotSound = se::Engine::GetAudio().LoadSound("assets/sounds/shot.wav");
+    static sl::Sound* dmrShotSound = se::Engine::GetAudio().LoadSound("assets/sounds/shot.wav");
+    static sl::Sound* sniperShotSound = se::Engine::GetAudio().LoadSound("assets/sounds/shot.wav");
 
     switch (type)
     {
     case WeaponType::AssaultRiffle:
     {
         weapon.texture = nullptr;
-        weapon.shotSound = nullptr;
+        weapon.shotSound = arShotSound;
         weapon.height = 12;
         weapon.width = 24;
         weapon.origin = { 10, 6 };
@@ -59,7 +64,7 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
     case WeaponType::SMG:
     {
         weapon.texture = nullptr;
-        weapon.shotSound = nullptr;
+        weapon.shotSound = smgShotSound;
         weapon.height = 10;
         weapon.width = 20;
         weapon.origin = { 8, 5 };
@@ -81,7 +86,7 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
     case WeaponType::DMR:
     {
         weapon.texture = nullptr;
-        weapon.shotSound = nullptr;
+        weapon.shotSound = dmrShotSound;
         weapon.height = 14;
         weapon.width = 28;
         weapon.origin = { 11, 7 };
@@ -103,7 +108,7 @@ void AttachWeapon(sl::Scene& scene, sl::EntityId id, WeaponType type)
     case WeaponType::Snipier:
     {
         weapon.texture = nullptr;
-        weapon.shotSound = nullptr;
+        weapon.shotSound = sniperShotSound;
         weapon.height = 16;
         weapon.width = 32;
         weapon.origin = { 13, 8 };
@@ -134,7 +139,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
     scene.ForEach<Projectile, TransformComponent, ColliderComponent, MovementComponent, TagComponent>([&](sl::EntityId id, Projectile& projectile, TransformComponent& transform, ColliderComponent& collider, MovementComponent& movement, TagComponent& tag)
         {
             sl::RectF projectileWorldRect = GetWorldCollider(scene, id);
-
+            static sl::Sound* hitSound = se::Engine::GetAudio().LoadSound("assets/sounds/hit.wav");
             scene.ForEach<TilesetChunk>([&](sl::EntityId tilesetId, TilesetChunk& chunk)
                 {
                     if (!chunk.worldRect.IsOverlappingWith(sl::RectI(projectileWorldRect))) return;
@@ -167,6 +172,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                             if (!projectileWorldRect.IsOverlappingWith(tileRect)) continue;
 
                             scene.DestroyEntity(id);
+                            se::Engine::GetAudio().PlaySound(hitSound);
 
                             return;
                         }

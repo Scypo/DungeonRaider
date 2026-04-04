@@ -13,11 +13,11 @@ sl::Scene& CreateSimulation()
 {
 	auto& ecs = se::Engine::GetECS();
 	sl::Graphics& gfx = se::Engine::GetGraphics();
+	sl::Audio& ad = se::Engine::GetAudio();
 	ecs.CreateScene("Level");
 	sl::Scene& scene = *ecs.GetScene("Level");
 
 	gfx.LoadTexture("assets/images/tile_set8.png");
-
 	GameGlobals::Reset();
 
 	CreateLevel(scene);
