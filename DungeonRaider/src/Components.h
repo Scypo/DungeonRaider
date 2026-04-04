@@ -95,6 +95,8 @@ struct Camera
 	sl::Vec2f pos = { 0.0f,0.0f };
 	float zoom = 1.0f;
 	bool active = true;
+	sl::Vec2f offset = { 0.0f,0.0f };
+	bool shake = false;
 };
 
 struct CallbackComponent

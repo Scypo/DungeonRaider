@@ -73,7 +73,7 @@ void UIRenderSystem::Run(float dt, sl::Scene& scene)
 			if (sprite.texture)
 			{
 				gfx.DrawTexture(transform.pos + sprite.offset, sprite.size, sprite.texture, sprite.shader,
-					sprite.flip.x, sprite.flip.y, sprite.angle, sprite.pivot, &sprite.uv, sprite.tint);
+					sprite.flip.x, sprite.flip.y, sprite.angle, &sprite.pivot, &sprite.uv, sprite.tint);
 			}
 			else
 			{

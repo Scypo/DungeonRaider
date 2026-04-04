@@ -269,7 +269,7 @@ void DrawLevel(sl::Scene& scene)
                             offset.y -= chunk.tileSize / 2;
                         }
                         const sl::RectF* uv = &chunk.uvs[size_t(size_t(type))];
-                        gfx.DrawTexture(tilePos + offset, size, chunk.atlas, nullptr, false, false, 0.0f, sl::Vec2f(0, 0), uv);
+                        gfx.DrawTexture(tilePos + offset, size, chunk.atlas, nullptr, false, false, 0.0f, nullptr, uv);
                     }
                 }
             }

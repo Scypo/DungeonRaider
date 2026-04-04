@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 #include <functional>
+#include<cassert>
 
 namespace sl
 {
@@ -9,8 +10,8 @@ namespace sl
     {
     public:
         Vec2() = default;
-        Vec2(T x_in, T y_in)
-            : x(x_in), y(y_in) {}
+        Vec2(T x, T y)
+            : x(x), y(y) {}
 
         Vec2(const Vec2& other) = default;
         Vec2(Vec2&& other) noexcept = default;
@@ -77,9 +78,10 @@ namespace sl
             *this = *this * rhs;
             return *this;
         }
-
+         
         Vec2 operator/(T rhs) const
         {
+            assert(rhs != T(0));
             return Vec2(x / rhs, y / rhs);
         }
 
@@ -87,6 +89,26 @@ namespace sl
         {
             *this = *this / rhs;
             return *this;
+        }
+
+        Vec2 operator/(Vec2<T> rhs)
+        {
+            assert(rhs.x != T(0) && rhs.y != T(0));
+            return Vec2( x / rhs.x, y / rhs.y );
+        }
+
+        Vec2 operator/=(Vec2<T> rhs)
+        {
+            *this = *this / rhs;
+            return *this;
+        }
+
+        Vec2 Rotate(T radians, Vec2<T> point) const
+        {
+            float cos = std::cos(radians);
+            float sin = std::sin(radians);
+            return { point.x * cos - point.y * sin,
+                     point.x * sin + point.y * cos };
         }
 
         T GetLength() const

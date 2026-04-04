@@ -2,6 +2,7 @@
 #include<algorithm>
 #include<vector>
 #include<cassert>
+#include<unordered_map>
 
 #include"Rect.h"
 #include"Texture.h"
@@ -19,9 +20,9 @@ namespace sl
 		{
 			SetSize(Vec2f(float(texture->GetWidth()), float(texture->GetHeight())));
 		}
-		Sprite(Texture* texture, float angle, Vec2f pos, Vec2f origin, Vec2f size,
+		Sprite(Texture* texture, float angle, Vec2f pos, Vec2f pivot, Vec2f size,
 			RectF uv, Color colorTint, bool flipX, bool flipY)
-			: texture(texture), angle(angle), pos(pos), origin(origin), size(size), uv(uv), colorTint(colorTint), flipX(flipX), flipY(flipY)
+			: texture(texture), angle(angle), pos(pos), pivot(pivot), size(size), uv(uv), colorTint(colorTint), flipX(flipX), flipY(flipY)
 		{
 			this->uv = uv / Vec2f(float(texture->GetWidth()), float(texture->GetHeight()));
 		}
@@ -32,7 +33,7 @@ namespace sl
 		Shader* GetShader() const { return shader; }
 		Vec2f GetPos() const { return pos; }
 		Vec2f GetSize() const { return size; }
-		Vec2f GetOrigin() const { return origin; }
+		Vec2f GetPivot() const { return pivot; }
 		RectF GetRect() const { return RectF(pos, size.x, size.y); }
 		RectF GetUV() const { return uv * Vec2f(float(texture->GetWidth()), float(texture->GetHeight())); }
 		RectF GetNDCUV() const { return uv; }
@@ -80,9 +81,9 @@ namespace sl
 			assert(texture);
 			this->uv = uv / Vec2f(float(texture->GetWidth()), float(texture->GetHeight()));
 		}
-		void SetOrigin(Vec2f origin)
+		void SetPivot(Vec2f pivot)
 		{
-			this->origin = origin;
+			this->pivot = pivot;
 		}
 		void SetColorTint(Color tint)
 		{
@@ -93,7 +94,7 @@ namespace sl
 		Shader* shader = nullptr;
 		float angle = 0.0f;
 		Vec2f pos = { 0,0 };
-		Vec2f origin = { 0,0 };
+		Vec2f pivot = { 0,0 };
 		Vec2f size = { 0,0 };
 		RectF uv = { 0.0f,1.0f,0.0f,1.0f };
 		Color colorTint = Colors::White;
@@ -101,33 +102,45 @@ namespace sl
 		bool flipY = false;
 	};
 
+	enum class AnimationMode
+	{
+		Once,
+		Loop
+	};
 	struct Animation
 	{
 	public:
-		Animation(int frameWidth, int frameHeight, float animationTime, Texture* texture)
-			: animationTime(animationTime)
+		Animation() = default;
+		Animation(Vec2f size, float animationTime, int nFrames, Texture* texture, Vec2f uvStart = {0.0f,0.0f})
+			: animationTime(animationTime), atlas(texture), nFrames(nFrames)
 		{
-			assert(animationTime != 0.0f && "AnimatedSprite needs to have animation time > 0");
-			int framesX = texture->GetWidth() / frameWidth;
-			int framesY = texture->GetHeight() / frameHeight;
-			nFrames = framesX * framesY;
+			assert(nFrames > 0);
+			assert(texture);
+			assert(animationTime > 0.0f && "AnimatedSprite needs to have animation time > 0");
+			int framesX = texture->GetWidth() / int(size.x);
+			int framesY = texture->GetHeight() / int(size.y);
 			frameTime = animationTime / float(nFrames);
+			int framesLeft = nFrames;
 			frameUVs.reserve(nFrames);
 
-			for (int i = 0; i < framesY; i++)
+			for (int i = int(uvStart.y); i + size.y <= texture->GetHeight() && framesLeft > 0; i += int(size.y))
 			{
-				for (int j = 0; j < framesX; j++)
+				for (int j = int(uvStart.x); j + size.x <= texture->GetWidth() && framesLeft > 0; j += int(size.x))
 				{
-					frameUVs.emplace_back(RectF(float(j) * frameWidth, float(j + 1) * frameWidth, float(i) * frameHeight, float(i + 1) * frameHeight));
+					frameUVs.emplace_back(RectF(float(j), float(j + size.x), float(i), float(i + size.y)));
+					framesLeft--;
 				}
+				uvStart.x = 0.0f;
 			}
 		}
 		~Animation() = default;
 		void Update(float dt)
 		{
+			if (paused) return;
 			currentTime += dt;
 			if (currentTime > animationTime)
 			{
+				if (currentTime > animationTime && AnimationMode::Once == mode) paused = true;
 				currentTime = fmod(currentTime, animationTime);
 			}
 			currentFrame = int(nFrames * currentTime / animationTime);
@@ -138,6 +151,42 @@ namespace sl
 			currentFrame = (currentFrame % nFrames + nFrames) % nFrames;
 			currentTime = currentFrame * frameTime;
 		}
+		void SetFrame(int n)
+		{
+			assert(n < nFrames && n >= 0);
+			currentFrame = n;
+			currentTime = currentFrame * frameTime;
+		}
+		int CurrentFrame() const
+		{
+			return currentFrame;
+		}
+		int Length()
+		{
+			return nFrames;
+		}
+		void Pause()
+		{
+			paused = true;
+		}
+		void Resume()
+		{
+			paused = false;
+		}
+		void Reset()
+		{
+			paused = false;
+			currentFrame = 0;
+			currentTime = 0.0f;
+		}
+		void SetAnimationMode(AnimationMode mode)
+		{
+			this->mode = mode;
+		}
+		Texture* GetTexture() const
+		{
+			return atlas;
+		}
 		RectF GetCurrentUV() const { return frameUVs[currentFrame]; }
 	private:
 		std::vector<RectF> frameUVs;
@@ -146,35 +195,81 @@ namespace sl
 		int nFrames = 0;
 		float animationTime = 0.0f;
 		float frameTime = 0.0f;
+		Texture* atlas = nullptr;
+		bool paused = false;
+		AnimationMode mode = AnimationMode::Loop;
 	};
 
 	class AnimatedSprite : public Sprite
 	{
 	public:
-		AnimatedSprite(int frameWidth, int frameHeight, float animationTime, Texture* texture)
-			: Sprite(texture), animation(frameWidth, frameHeight, animationTime, texture)
-		{
-			SetPixelUV(animation.GetCurrentUV());
-		}
-		AnimatedSprite(Texture* texture, Animation& animation)
-			: Sprite(texture), animation(animation) {}
+		AnimatedSprite() = default;
 		~AnimatedSprite() = default;
 
 		void Update(float dt)
 		{
-			animation.Update(dt);
-			SetPixelUV(animation.GetCurrentUV());
+			assert(curAnimation);
+			curAnimation->Update(dt);
+			SetPixelUV(curAnimation->GetCurrentUV());
 		}
 		void AdvanceFrames(int n)
 		{
-			animation.AdvanceFrames(n);
-			SetPixelUV(animation.GetCurrentUV());
+			assert(curAnimation);
+			curAnimation->AdvanceFrames(n);
+			SetPixelUV(curAnimation->GetCurrentUV());
 		}
-		void SetAnimation(Animation& animation)
+		void AddAnimation(const Animation& animation, const std::string& id)
 		{
-			this->animation = animation;
+			animations[id] = animation;
+			if (animations.size() == 1) curAnimation = &animations[id];
+		}
+		void RemoveAnimation(const std::string& id)
+		{
+			assert(animations.contains(id));
+			if (&animations[id] == curAnimation) curAnimation = nullptr;
+			animations.erase(id);
+		}
+		void SetFrame(int n)
+		{
+			assert(curAnimation);
+			curAnimation->SetFrame(n);
+			SetPixelUV(curAnimation->GetCurrentUV());
+		}
+		void Play(const std::string& id, AnimationMode mode)
+		{
+			assert(animations.contains(id));
+			curAnimation = &animations[id];
+			curAnimation->SetAnimationMode(mode);
+			SetTexture(curAnimation->GetTexture());
+			curAnimation->Reset();
+
+		}
+		void Play(const std::string& id)
+		{
+			assert(animations.contains(id));
+			curAnimation = &animations[id];
+			SetTexture(curAnimation->GetTexture());
+			
+			curAnimation->Reset();
+		}
+		void Stop()
+		{
+			assert(curAnimation);
+			curAnimation->Reset();
+			curAnimation->Pause();
+		}
+		void Pause()
+		{
+			assert(curAnimation);
+			curAnimation->Pause();
+		}
+		void Resume()
+		{
+			assert(curAnimation);
+			curAnimation->Resume();
 		}
 	private:
-		Animation animation;
+		std::unordered_map<std::string, Animation> animations;
+		Animation* curAnimation = nullptr;
 	};
 }

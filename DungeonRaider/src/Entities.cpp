@@ -12,7 +12,7 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 	sl::EntityId player = scene.CreateEntity();
 	scene.AddComponent<TagComponent>(player, TagComponent{ 0 | uint32_t(Tags::player) });
 	scene.AddComponent<HealthComponent>(player, HealthComponent{ 200.0f, 200.0f });
-	scene.AddComponent<ShieldComponent>(player, ShieldComponent{ 200.0f, 200.0f, 5.0f, 1.5f,1.5f });
+	scene.AddComponent<ShieldComponent>(player, ShieldComponent{ 200.0f, 200.0f, 0.1f, 0.0f,0.75f });
 	scene.AddComponent<TransformComponent>(player, TransformComponent{ sl::Vec2f(450,350), 0.0f });
 	scene.AddComponent<MovementComponent>(player, MovementComponent{});
 	scene.AddComponent<ColliderComponent>(player, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
@@ -54,7 +54,7 @@ sl::EntityId CreateRandomEnemy(sl::Scene& scene, sl::Vec2f pos, float difficulty
 		enemy = CreateEnemyBase(scene, pos, 40.0f, 40.0f, 100.0f * difficulty, nullptr);
 		AttachWeapon(scene, enemy, WeaponType::AssaultRiffle);
 		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Red;
-		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 100.0f * difficulty, 100.0f * difficulty, 5.0f, 0.0f,1.5f });
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 100.0f * difficulty, 100.0f * difficulty, 0.12f, 0.0f,1.5f });
 		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
 		break;
 	}
@@ -63,7 +63,7 @@ sl::EntityId CreateRandomEnemy(sl::Scene& scene, sl::Vec2f pos, float difficulty
 		enemy = CreateEnemyBase(scene, pos, 30.0f, 30.0f, 90.0f, nullptr);
 		AttachWeapon(scene, enemy, WeaponType::SMG);
 		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Green;
-		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 120.0f * difficulty, 120.0f * difficulty, 4.5f, 0.0f,1.3f });
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 120.0f * difficulty, 120.0f * difficulty, 0.15f, 0.0f,1.3f });
 		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
 		break;
 	}
@@ -72,7 +72,7 @@ sl::EntityId CreateRandomEnemy(sl::Scene& scene, sl::Vec2f pos, float difficulty
 		enemy = CreateEnemyBase(scene, pos, 40.0f, 40.0f, 80.0f, nullptr);
 		AttachWeapon(scene, enemy, WeaponType::DMR);
 		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Magenta;
-		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 30.0f * difficulty, 30.0f * difficulty, 5.0f, 0.0f,1.55f });
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 30.0f * difficulty, 30.0f * difficulty, 0.1f, 0.0f,1.55f });
 		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
 		break;
 	}
@@ -81,7 +81,7 @@ sl::EntityId CreateRandomEnemy(sl::Scene& scene, sl::Vec2f pos, float difficulty
 		enemy = CreateEnemyBase(scene, pos, 30.0f, 30.0f, 70.0f, nullptr);
 		AttachWeapon(scene, enemy, WeaponType::Snipier);
 		scene.GetComponent<SpriteComponent>(enemy).tint = sl::Colors::Cyan;
-		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 10.0f * difficulty, 10.0f * difficulty, 5.5f, 0.0f,1.75f });
+		scene.AddComponent<ShieldComponent>(enemy, ShieldComponent{ 10.0f * difficulty, 10.0f * difficulty, 0.1f, 0.0f,1.75f });
 		scene.GetComponent<WeaponComponent>(enemy).damage *= difficulty;
 		break;
 	}
@@ -198,7 +198,7 @@ void ShieldSystem::Run(float dt, sl::Scene& scene)
 			shield.cooldownLeft -= dt;
 			if (shield.cooldownLeft <= 0.0f)
 			{
-				shield.shield = std::min(shield.shield + shield.regenRate * dt, shield.maxShield);
+				shield.shield = std::min(shield.shield + shield.regenRate * shield.maxShield * dt, shield.maxShield);
 			}
 		});
 }
@@ -237,6 +237,7 @@ void PlayerSystem::Run(float dt, sl::Scene& scene)
 	if (mouse.LeftIsPressed())
 	{
 		Camera& cam = scene.GetComponent<Camera>(GameGlobals::camera);
+		
 		sl::Vec2f mouseScreen = mouse.GetPos();
 		sl::Vec2f mouseCanvas = sl::Vec2f{
 			mouseScreen.x * (se::Engine::GetGraphics().GetCanvasWidth() / se::Engine::GetWindow().GetWidth()),
