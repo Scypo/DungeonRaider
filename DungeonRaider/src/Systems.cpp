@@ -96,18 +96,6 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 	gfx.SetDrawDepth(6.0f);
 	DrawHUD(scene);
 	gfx.DrawText(sl::Vec2f(0.0f, -25.0f), "FPS: " + std::to_string(int(1 / dt)), nullptr, 50.0f, sl::Colors::White);
-	
-	int ammoLeft = scene.GetComponent<WeaponComponent>(GameGlobals::player).ammoLeft;
-	int magSize = scene.GetComponent<WeaponComponent>(GameGlobals::player).magSize;
-	std::string zero = ammoLeft < 10 ? "0" : "";
-	if (ammoLeft == 0)
-	{
-		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), "00/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
-	}
-	else
-	{
-		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), zero + std::to_string(ammoLeft) + "/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
-	}
 	if (scene.GetComponent<HealthComponent>(GameGlobals::player).health <= 0.0f)
 	{
 		gfx.SetDrawDepth(7.0f);
@@ -119,16 +107,25 @@ void RenderSystem::Run(float dt, sl::Scene& scene)
 void DrawSprites(sl::Scene& scene)
 {
 	sl::Graphics& gfx = se::Engine::GetGraphics();
+	static sl::Shader* hitShader = gfx.LoadShader("assets/shaders/hit.vert", "assets/shaders/hit.frag", true);
 	scene.ForEach<TransformComponent, SpriteComponent>([&](sl::EntityId id, TransformComponent& transform, SpriteComponent& sprite)
 		{
+			sl::Shader* shader = sprite.shader;
+			if (scene.HasComponent<HealthComponent>(id))
+			{
+				if (scene.GetComponent<HealthComponent>(id).timeSinceHit < 0.7f)
+				{
+					shader = hitShader;
+				}
+			}
 			if (sprite.texture)
 			{
-				gfx.DrawTexture(transform.pos + sprite.offset, sprite.size, sprite.texture, sprite.shader,
+				gfx.DrawTexture(transform.pos + sprite.offset, sprite.size, sprite.texture, shader,
 					sprite.flip.x, sprite.flip.y, sprite.angle, &sprite.pivot, &sprite.uv, sprite.tint);
 			}
 			else
 			{
-				gfx.DrawRect(transform.pos + sprite.offset, sprite.size, sprite.tint);
+				gfx.DrawRect(transform.pos + sprite.offset, sprite.size, sprite.tint, 0.0f, shader);
 			}
 		});
 }

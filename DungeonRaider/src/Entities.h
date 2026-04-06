@@ -24,6 +24,7 @@ struct HealthComponent
 {
 	float health = 0.0f;
 	float maxHealth = 0.0f;
+	float timeSinceHit = 1.0f;
 };
 
 class PlayerSystem : public sl::System

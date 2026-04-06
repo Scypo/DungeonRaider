@@ -180,6 +180,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
                 });
             scene.ForEach<ColliderComponent, HealthComponent>([&](sl::EventId target, ColliderComponent& targetCollider, HealthComponent& targetHealth)
                 {
+                    scene.GetComponent<HealthComponent>(target).timeSinceHit += dt;
                     if ( targetCollider.layer == ColliderComponent::CollisionLayer::Nothing) return;
                     if (scene.HasComponent<TagComponent>(target))
                     {
@@ -192,6 +193,7 @@ void ProjectileCollisionSystem::Run(float dt, sl::Scene& scene)
 
                         float& health = scene.GetComponent<HealthComponent>(target).health;
                         if (health <= 0.0f) return;
+                        scene.GetComponent<HealthComponent>(target).timeSinceHit = 0.0f;
                         if (scene.HasComponent<ShieldComponent>(target))
                         {
                             ShieldComponent& shield = scene.GetComponent<ShieldComponent>(target);

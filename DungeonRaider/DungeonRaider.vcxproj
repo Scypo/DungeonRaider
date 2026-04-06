@@ -181,6 +181,10 @@
     <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Weapon.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shaders\hit.frag" />
+    <None Include="assets\shaders\hit.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

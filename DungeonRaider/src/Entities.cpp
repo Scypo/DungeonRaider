@@ -18,7 +18,6 @@ sl::EntityId CreatePlayer(sl::Scene& scene, sl::Vec2f pos, float width, float he
 	scene.AddComponent<ColliderComponent>(player, ColliderComponent{ sl::RectF(0, width, 0, height), ColliderComponent::CollisionLayer::World });
 	scene.AddComponent<SpriteComponent>(player, SpriteComponent(sl::Vec2f(0, 0), sl::Vec2f(width / 2, height / 2), texture,
 		sl::RectF(0.0f, width, 0.0f, height), sl::Vec2<bool>(false, false), 0.0f, sl::Colors::White, sl::Vec2f(width, height), nullptr));
-
 	AttachWeapon(scene, player, WeaponType::AssaultRiffle);
 	GameGlobals::player = player;
 
@@ -156,7 +155,7 @@ void DrawReloadBars(sl::Scene& scene)
 			float barWidth = worldRect.GetWidth();
 			sl::Vec2f barPos(worldRect.left, worldRect.top - height - 7);
 
-			float fraction = weapon.reloadTimeLeft/ weapon.reloadTime;
+			float fraction = weapon.reloadTimeLeft / weapon.reloadTime;
 			sl::Color barColor = sl::Colors::White;
 
 			DrawBar(barPos, barWidth, height, fraction, barColor);
@@ -175,6 +174,20 @@ void DrawHUD(sl::Scene& scene)
 
 	auto& health = scene.GetComponent<HealthComponent>(GameGlobals::player);
 	DrawBar(healthPos, barWidth, barHeight, health.health / health.maxHealth, sl::Colors::Red);
+
+	auto& gfx = se::Engine::GetGraphics();
+
+	int ammoLeft = scene.GetComponent<WeaponComponent>(GameGlobals::player).ammoLeft;
+	int magSize = scene.GetComponent<WeaponComponent>(GameGlobals::player).magSize;
+	std::string zero = ammoLeft < 10 ? "0" : "";
+	if (ammoLeft == 0)
+	{
+		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), "00/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
+	}
+	else
+	{
+		gfx.DrawText(sl::Vec2f(500.0f, 270.0f), zero + std::to_string(ammoLeft) + "/" + std::to_string(magSize), nullptr, 70.0f, sl::Colors::White);
+	}
 }
 
 void DrawDeathScreen(sl::Scene& scene, float dt)
