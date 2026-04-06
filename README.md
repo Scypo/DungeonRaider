@@ -4,9 +4,9 @@
  Each room is filled with random obstacles and enemies, and every enemy has unique stats depending on their weapons. 
  The game gradually becomes more challenging as you progress through the dungeon.
  
- ![Gameplay_1](https://github.com/Scypo/DungeonRaider/blob/master/DungeonRaider/assets/images/gameplay__ss_1.png)
+ ![Gameplay_1](https://github.com/Scypo/DungeonRaider/blob/master/DungeonRaider/assets/images/gameplay_ss_1.png)
  
- ![Gameplay_2](https://github.com/Scypo/DungeonRaider/blob/master/DungeonRaider/assets/images/gameplay__ss_2.png)
+ ![Gameplay_2](https://github.com/Scypo/DungeonRaider/blob/master/DungeonRaider/assets/images/gameplay_ss_2.png)
  ---
  ## Controls
 - WSAD - walking
