@@ -15,9 +15,9 @@
 - ESC - BuyMenu
 - F11 - Fullscreen
 ## Weapon Types
-- AssaultRiffle,
-- SMG,
-- DMR,
+- AssaultRiffle
+- SMG
+- DMR
 - Sniper
 ## Upgrades
 - health boost
